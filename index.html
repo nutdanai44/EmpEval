@@ -1,1 +1,15 @@
-<!doctype html><html lang="th"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>EmpEval | Employee Capability</title></head><body><div id="root"></div><script type="module" src="/src/app-v1.2.tsx"></script></body></html>
+<!doctype html>
+<html lang="th"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>EmpEval | Employee Capability</title></head>
+<body>
+<div id="root"><div id="startup-status" style="font:16px system-ui;padding:32px;color:#222b45"><h2>EmpEval is loading…</h2><p id="startup-detail">Starting application</p></div></div>
+<script>
+(function(){
+var startup=document.getElementById('startup-detail');
+function show(message){if(document.getElementById('startup-status')){startup.textContent='Unable to start: '+message;startup.style.color='#a21e35';}}
+window.addEventListener('error',function(event){show(event.message||'JavaScript or asset loading failed');});
+window.addEventListener('unhandledrejection',function(event){show(String(event.reason||'Unexpected promise rejection'));});
+setTimeout(function(){if(document.getElementById('startup-status'))show('App did not render. Check deployment and browser console.');},12000);
+})();
+</script>
+<script type="module" src="/src/app-v1.2.tsx"></script>
+</body></html>
