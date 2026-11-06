@@ -7,3 +7,8 @@
 .employee-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
 .employee-fields label{display:flex;flex-direction:column;gap:5px}
 .employee-fields input{width:100%;box-sizing:border-box}
+
+/* Highlight the current tab across employee, project, and settings tab bars. */
+.folder-tabs button[aria-selected="true"], .folder-tabs button.active {background:#6153b7;color:#fff;border-color:#6153b7;font-weight:700;box-shadow:inset 0 -3px #f3b37a;}
+.folder-tabs button[aria-selected="true"]:hover {background:#5144a6;color:#fff;}
+.folder-tabs button[aria-selected="true"]:focus-visible {outline:3px solid #f3b37a;outline-offset:2px;}
