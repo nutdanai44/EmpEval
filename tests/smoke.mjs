@@ -35,8 +35,11 @@ try {
   await page.getByRole('button', { name: 'Projects' }).click();
   await page.getByRole('tab', { name: 'Organizations' }).click();
   await page.getByRole('heading', { name: 'Organizations', level: 2 }).waitFor();
-  await page.getByRole('button', { name: 'Metrics' }).click();
+  await page.getByRole('button', { name: 'Q-Pref Settings' }).click();
+  await page.getByRole('tab', { name: 'Metric', exact: true }).click();
   await page.getByRole('heading', { name: 'Metric catalog' }).waitFor();
+  await page.getByRole('tab', { name: 'Q-Pref Period Time' }).click();
+  await page.getByRole('heading', { name: 'Evaluation periods' }).waitFor();
   await page.getByRole('button', { name: 'Skills' }).click();
   await page.getByRole('heading', { name: 'Skill catalog · master data only' }).waitFor();
   await page.getByRole('button', { name: 'Certificates' }).click();
