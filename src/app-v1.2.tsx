@@ -55,7 +55,7 @@ return <div className="app"><aside><h2>◈ EmpEval</h2><p>Capability & People ·
 {sub==='Bookings'&&<>{block('Employee bookings','Bookings',r=>r.employeeId===current.id,{employeeId:current.id},['employeeId'])}</>}
 </>}</section>}
 {page==='Projects'&&<section className="panel"><div className="folder-tabs" role="tablist"><button role="tab" aria-selected={projectTab==='Projects'} onClick={()=>setProjectTab('Projects')}>Projects</button><button role="tab" aria-selected={projectTab==='Organizations'} onClick={()=>setProjectTab('Organizations')}>Organizations</button></div>{block(projectTab,projectTab)}</section>}
-{page==='Metrics'&&<>{block('Metric catalog','Metrics',{ } as never)}<section className="panel"><h2>Metric axes</h2><select aria-label="Edit metric axes" value={selectedMetric} onChange={e=>setMetric(e.target.value)}>{data.Metrics.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select>{selectedMetric&&block('Axes','MetricAxes',r=>r.metricId===selectedMetric,{metricId:selectedMetric})}</section></>}
+{page==='Metrics'&&<>{block('Metric catalog','Metrics')}<section className="panel"><h2>Metric axes</h2><select aria-label="Edit metric axes" value={selectedMetric} onChange={e=>setMetric(e.target.value)}>{data.Metrics.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select>{selectedMetric&&block('Axes','MetricAxes',r=>r.metricId===selectedMetric,{metricId:selectedMetric})}</section></>}
 {page==='Skills'&&block('Skill catalog · master data only','Skills')}
 {page==='Certificates'&&block('Certificate catalog · master data only','CertificateMaster')}
 {page==='Bookings'&&block('Bookings','Bookings')}
