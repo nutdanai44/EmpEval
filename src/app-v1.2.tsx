@@ -18,6 +18,12 @@ async function transport(path:string,method='GET',body?:unknown){if(!token||!spr
 const names=['Dashboard','Employees','Bookings','Projects','Metrics','Skills','Certificates','Portfolio','Q-Pref Settings'] as const;
 const master:{[key:string]:SheetName}={Skills:'Skills',Certificates:'CertificateMaster',Metrics:'Metrics',Projects:'Projects'};
 const relation:{[key:string]:SheetName}={orgId:'Organizations',projectId:'Projects',employeeId:'Employees',metricId:'Metrics',skillId:'Skills',certificateId:'CertificateMaster',axisId:'MetricAxes',periodId:'EvaluationPeriods'};
+class AppErrorBoundary extends React.Component<{children:React.ReactNode},{error:string|null}>{
+state={error:null as string|null};
+static getDerivedStateFromError(error:Error){return {error:error.message||String(error)}}
+componentDidCatch(error:Error,info:React.ErrorInfo){console.error('EmpEval render failed',error,info.componentStack)}
+render(){if(this.state.error)return <div style={{padding:32,fontFamily:'system-ui',color:'#222b45'}}><h1>EmpEval could not render</h1><p>Runtime error: {this.state.error}</p><button onClick={()=>window.location.reload()}>Reload</button><p>Please share this error message so it can be fixed.</p></div>;return this.props.children}
+}
 function App(){
 const [overviewTab,setOverviewTab]=useState<'Stat'|'Skill'|'Booking'>('Stat'),[overviewEmployees,setOverviewEmployees]=useState<string[]>([]),[overviewSkills,setOverviewSkills]=useState<string[]>([]),[overviewYear,setOverviewYear]=useState(String(new Date().getFullYear())),[qPrefTab,setQPrefTab]=useState<'Metric'|'Q-Pref Period Time'>('Metric'),[progress,setProgress]=useState<{label:string;done:number;total:number}|null>(null),[syncing,setSyncing]=useState(false),[data,setData]=useState<Workbook>(emptyWorkbook),[page,setPage]=useState<string>('Dashboard'),[employee,setEmployee]=useState(''),[sub,setSub]=useState('Profile'),[projectTab,setProjectTab]=useState<'Projects'|'Organizations'>('Projects'),[metric,setMetric]=useState(''),[period,setPeriod]=useState(''),[compare,setCompare]=useState(''),[revision,setRevision]=useState(''),[connected,setConnected]=useState(false),[dirty,setDirty]=useState(false),[busy,setBusy]=useState(false),[commentDraft,setCommentDraft]=useState(''),[message,setMessage]=useState('Empty demo workspace — connect Google to load your workbook');
 const progressRef=useRef<{label:string;done:number;total:number}|null>(null);
@@ -81,4 +87,4 @@ return <div className="app"><aside><h2>◈ EmpEval</h2><p>Capability & People ·
 {page==='Q-Pref Settings'&&<><div className="folder-tabs" role="tablist" aria-label="Q-Pref Settings tabs"><button role="tab" aria-selected={qPrefTab==='Metric'} onClick={()=>setQPrefTab('Metric')}>Metric</button><button role="tab" aria-selected={qPrefTab==='Q-Pref Period Time'} onClick={()=>setQPrefTab('Q-Pref Period Time')}>Q-Pref Period Time</button></div>{qPrefTab==='Metric'?<>{block('Metric catalog','Metrics')}<section className="panel"><h2>Metric axes</h2><select aria-label="Edit metric axes" value={selectedMetric} onChange={e=>setMetric(e.target.value)}>{data.Metrics.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select>{selectedMetric&&block('Axes','MetricAxes',r=>r.metricId===selectedMetric,{metricId:selectedMetric})}</section></>:<>{block('Evaluation periods','EvaluationPeriods')}</>}</>}
 <footer>EmpEval v1.2 · {connected?'Google connected':'Local demo'} · {dirty?'Unsaved':'Saved or unchanged'}</footer></main></div>
 }
-createRoot(document.getElementById('root')!).render(<App/>);
+createRoot(document.getElementById('root')!).render(<AppErrorBoundary><App/></AppErrorBoundary>);
