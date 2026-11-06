@@ -1,4 +1,4 @@
-import {sheetHeaders, sheetNames, type SheetName} from './schema-v1.2';
+import {sheetHeaders, sheetNames, type SheetName} from './schema-v1.2.ts';
 export type Row = Record<string,string>;
 export type Workbook = Record<SheetName,Row[]>;
 export type ValuesPayload = {range:string;values:string[][]};
