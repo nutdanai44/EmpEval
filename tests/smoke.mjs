@@ -32,7 +32,7 @@ try {
   await page.getByRole('button', { name: 'Skills' }).click();
   await page.getByRole('heading', { name: 'Skill matrix / Silo risk' }).waitFor();
   await page.getByRole('button', { name: 'Projects' }).click();
-  await page.getByRole('heading', { name: 'Projects' }).waitFor();
+  await page.getByRole('heading', { name: 'Projects', level: 2 }).waitFor();
   await page.getByRole('columnheader', { name: 'pmName' }).waitFor();
   await page.getByRole('button', { name: 'Certificates' }).click();
   await page.getByRole('heading', { name: /Employee certificates/ }).waitFor();
