@@ -31,6 +31,13 @@ try {
   await page.getByRole('heading', { name: 'Project booking timeline' }).waitFor();
   await page.getByRole('button', { name: 'Skills' }).click();
   await page.getByRole('heading', { name: 'Skill matrix / Silo risk' }).waitFor();
+  await page.getByRole('button', { name: 'Projects' }).click();
+  await page.getByRole('heading', { name: 'Projects' }).waitFor();
+  await page.getByRole('columnheader', { name: 'pmName' }).waitFor();
+  await page.getByRole('button', { name: 'Certificates' }).click();
+  await page.getByRole('heading', { name: /Employee certificates/ }).waitFor();
+  await page.getByRole('button', { name: 'Portfolio' }).click();
+  await page.getByRole('heading', { name: 'Project portfolio' }).waitFor();
   if (errors.length) throw Error('Browser errors:\n' + errors.join('\n'));
   console.log('PASS: app rendered, navigation worked, no browser exceptions or missing assets');
 } finally {
