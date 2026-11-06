@@ -20,7 +20,13 @@ try {
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: 'Dashboard' }).waitFor({ timeout: 10000 });
   await page.getByRole('button', { name: 'Employees' }).click();
-  await page.getByRole('heading', { name: 'Employee detail' }).waitFor();
+  await page.getByRole('heading', { name: 'Employee performance comparison' }).waitFor();
+  await page.getByRole('combobox', { name: 'Performance axis group' }).selectOption('KPI');
+  await page.getByRole('combobox', { name: 'Performance axis group' }).selectOption('All');
+  await page.getByRole('tab', { name: /EMP001/ }).click();
+  await page.getByRole('heading', { name: /EMP001/ }).waitFor();
+  await page.getByRole('tab', { name: '+ Add' }).click();
+  await page.getByRole('heading', { name: 'Add employee' }).waitFor();
   await page.getByRole('button', { name: 'Bookings' }).click();
   await page.getByRole('heading', { name: 'Project booking timeline' }).waitFor();
   await page.getByRole('button', { name: 'Skills' }).click();
