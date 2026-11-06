@@ -1,4 +1,4 @@
-import {sheetHeaders,sheetNames,type SheetName} from './schema-v1.2.ts';
+import {sheetHeaders,sheetNames,emptyWorkbook,type SheetName} from './schema-v1.2.ts';
 import {decodeSheet,encodeWorkbook,validateWorkbook,type Workbook} from './workbook-v1.2.ts';
 
 export type SheetsTransport = (path:string,method?:string,body?:unknown)=>Promise<any>;
@@ -21,7 +21,7 @@ export async function initializeEmptyWorkbook(api:SheetsTransport):Promise<void>
   const existing=new Set((info.sheets||[]).map((s:any)=>s.properties.title));
   if(sheetNames.some(name=>existing.has(name)))throw Error('Initialization refused: one or more EmpEval sheets already exist');
   await api(':batchUpdate','POST',{requests:sheetNames.map(title=>({addSheet:{properties:{title}}}))});
-  const workbook=Object.fromEntries(sheetNames.map(name=>[name,[]])) as Workbook;
+  const workbook=emptyWorkbook();
   workbook.Meta=[{key:'schemaVersion',value:'1.2'},{key:'revision',value:crypto.randomUUID()}];
   await api('/values:batchUpdate','POST',{valueInputOption:'RAW',data:encodeWorkbook(workbook)});
 }
