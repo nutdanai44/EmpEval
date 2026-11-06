@@ -29,8 +29,17 @@ try {
   await page.getByRole('heading', { name: 'Add employee' }).waitFor();
   await page.getByRole('button', { name: 'Bookings' }).click();
   await page.getByRole('heading', { name: 'Project booking timeline' }).waitFor();
+  await page.getByRole('button', { name: 'Projects' }).click();
+  await page.getByRole('tab', { name: 'Organizations' }).click();
+  await page.getByRole('heading', { name: 'Organizations', level: 2 }).waitFor();
+  await page.getByRole('tab', { name: 'Projects' }).click();
+  await page.getByRole('columnheader', { name: 'pmName' }).waitFor();
+  await page.getByRole('button', { name: 'Employees' }).click();
+  await page.getByRole('tab', { name: /EMP001/ }).click();
+  await page.getByRole('heading', { name: 'Employee skills' }).waitFor();
+  await page.getByRole('heading', { name: 'Employee certificates' }).waitFor();
   await page.getByRole('button', { name: 'Skills' }).click();
-  await page.getByRole('heading', { name: 'Skill matrix / Silo risk' }).waitFor();
+  await page.getByRole('heading', { name: 'Skill catalog · master data only' }).waitFor();
   await page.getByRole('button', { name: 'Projects' }).click();
   await page.getByRole('heading', { name: 'Projects', level: 2 }).waitFor();
   await page.getByRole('columnheader', { name: 'pmName' }).waitFor();
