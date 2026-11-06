@@ -29,8 +29,9 @@ try {
   await page.getByRole('tab', { name: 'Certificates' }).click();
   await page.getByRole('button', { name: '+ Add earned certificate' }).waitFor();
   await page.getByRole('tab', { name: 'Comments' }).click();
-  await page.getByRole('button', { name: '+ Add comment' }).click();
-  await page.getByRole('textbox', { name: 'Comment' }).fill('Initial review');
+  await page.getByRole('textbox', { name: 'New comment' }).fill('Initial review');
+  await page.getByRole('button', { name: 'Add comment' }).click();
+  await page.getByText('Initial review').waitFor();
   await page.getByRole('button', { name: 'Projects' }).click();
   await page.getByRole('tab', { name: 'Organizations' }).click();
   await page.getByRole('heading', { name: 'Organizations', level: 2 }).waitFor();
