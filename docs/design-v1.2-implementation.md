@@ -1,3 +1,5 @@
+> Updated decision (2026-11-06): The user confirms there is no existing production data to preserve. Build the v1.2 Sheets schema directly; no legacy migration or backfill is required. Legacy preview utilities are optional and must not block the new implementation. Initialize empty tabs with v1.2 headers, and replace legacy full-sheet save before connecting the new UI. Do not assume that demo seed data is production data.
+
 # EmpEval v1.2 — implementation plan
 
 Status: foundation in progress. Do not deploy or migrate production Sheets until CI and data-backup checks pass.
@@ -30,7 +32,7 @@ Optional later: CertificateSkills (no dependency required).
 | EmployeeComments | id, employeeId, author, createdAt, comment |
 | Projects | id, orgId, name, periodStart, periodEnd, pmName |
 
-## Migration — required before UI writes
+## Superseded legacy migration notes — not required for this empty-data rollout
 1. Back up the entire spreadsheet and capture original headers, row counts, revision.
 2. Read all existing Metrics and Scores before any modifications. Legacy Metrics rows represent axes; group by category into new Metrics, preserving axis ID as MetricAxes.id. Create one EmployeeMetrics assignment per employee/category with an existing score. Preserve every original score, and attach an explicit legacy EvaluationPeriod.
 3. Deduplicate existing Certifications by normalized (name, issuer) into CertificateMaster, retaining each employee's original issued/expires fields.
