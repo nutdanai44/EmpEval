@@ -50,3 +50,43 @@ export function previewLegacyMetrics(rows: RecordRow[]) {
   }
   return { metrics, axes };
 }
+
+/** Build a read-only migration preview from the legacy sheet layout. */
+export function previewLegacyMigration(input: {
+  employees: RecordRow[];
+  metrics: RecordRow[];
+  scores: RecordRow[];
+  certifications: RecordRow[];
+}) {
+  const {metrics, axes} = previewLegacyMetrics(input.metrics);
+  const axisToMetric = new Map(axes.map(a => [a.id, a.metricId]));
+  const employeeIds = new Set(input.employees.map(e => e.id));
+  const axisIds = new Set(axes.map(a => a.id));
+  const assignments = new Map<string, EmployeeMetric>();
+  const errors: string[] = [];
+  for (const score of input.scores) {
+    if (!employeeIds.has(score.employeeId)) errors.push('Score references unknown employee: ' + score.employeeId);
+    if (!axisIds.has(score.metricId)) errors.push('Score references unknown axis: ' + score.metricId);
+    const metricId = axisToMetric.get(score.metricId);
+    if (metricId && employeeIds.has(score.employeeId)) {
+      const key = JSON.stringify([score.employeeId, metricId]);
+      assignments.set(key, {employeeId: score.employeeId, metricId});
+    }
+  }
+  const certificateMaster = new Map<string, {id: string; name: string; issuer: string}>();
+  const earnedCertificates = input.certifications.map(cert => {
+    const name = (cert.name || '').trim(), issuer = (cert.issuer || '').trim();
+    if (!name) errors.push('Certificate missing name: ' + (cert.id || 'unknown'));
+    if (!employeeIds.has(cert.employeeId)) errors.push('Certificate references unknown employee: ' + cert.employeeId);
+    const key = JSON.stringify([name.toLocaleLowerCase(), issuer.toLocaleLowerCase()]);
+    if (!certificateMaster.has(key)) certificateMaster.set(key, {id: 'legacy-cert-' + (certificateMaster.size + 1), name, issuer});
+    return {...cert, certificateId: certificateMaster.get(key)!.id};
+  });
+  return {
+    metrics, axes, assignments: [...assignments.values()],
+    certificateMaster: [...certificateMaster.values()], earnedCertificates,
+    scoreCount: input.scores.length,
+    errors,
+    safeToApply: errors.length === 0
+  };
+}
