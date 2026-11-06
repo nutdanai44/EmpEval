@@ -21,6 +21,8 @@ try {
   await page.getByRole('heading', { name: 'Dashboard' }).waitFor({ timeout: 10000 });
   await page.getByRole('button', { name: 'Employees' }).click();
   await page.getByRole('heading', { name: 'Employee performance comparison' }).waitFor();
+  await page.getByRole('combobox', { name: 'Performance axis group' }).selectOption('KPI');
+  await page.getByRole('combobox', { name: 'Performance axis group' }).selectOption('All');
   await page.getByRole('tab', { name: /EMP001/ }).click();
   await page.getByRole('heading', { name: /EMP001/ }).waitFor();
   await page.getByRole('tab', { name: '+ Add' }).click();
