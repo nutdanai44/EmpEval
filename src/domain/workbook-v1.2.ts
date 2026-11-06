@@ -6,7 +6,7 @@ export type ValuesPayload = {range:string;values:string[][]};
 export function decodeSheet(name:SheetName, values:string[][]):Row[] {
   const expected=[...sheetHeaders[name]];
   if (!values.length) throw new Error('Missing header row: '+name);
-  if (JSON.stringify(values[0])!==JSON.stringify(expected)) throw new Error('Unexpected schema: '+name);
+  if (JSON.stringify(values[0])!==JSON.stringify(expected)) throw new Error('Unexpected schema: '+name+'. Expected columns: '+expected.join(', ')+'. Found: '+values[0].join(', ')+'. No data was changed. Correct the header row in Google Sheets before Reload.');
   return values.slice(1).filter(row=>row.some(cell=>cell!==''&&cell!==undefined)).map(row=>Object.fromEntries(expected.map((h,i)=>[h,String(row[i]??'')])));
 }
 export function encodeSheet(name:SheetName, rows:Row[]):ValuesPayload {
