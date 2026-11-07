@@ -3,7 +3,7 @@ export const sheetHeaders = {
   Employees: ['id','name','role','team','active','employeeCode'],
   Organizations: ['id','name'],
   Projects: ['id','orgId','name','periodStart','periodEnd','pmName'],
-  Bookings: ['id','employeeId','projectId','start','end','allocation','role'],
+  Bookings: ['id','employeeId','projectId','start','end','allocation','utilize','role'],
   Metrics: ['id','name','description','active','sortOrder'],
   MetricAxes: ['id','metricId','name','max','weight','color','sortOrder','active'],
   EmployeeMetrics: ['employeeId','metricId','assignedAt','periodId'],
