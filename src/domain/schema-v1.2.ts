@@ -7,7 +7,7 @@ export const sheetHeaders = {
   Metrics: ['id','name','description','active','sortOrder'],
   MetricAxes: ['id','metricId','name','max','weight','color','sortOrder','active'],
   EmployeeMetrics: ['employeeId','metricId','assignedAt'],
-  EvaluationPeriods: ['id','name','startDate','endDate','status'],
+  EvaluationPeriods: ['id','name','startDate','endDate','status','metricIds'],
   Scores: ['employeeId','axisId','periodId','value','updatedAt'],
   Skills: ['id','name','category','description','target','critical'],
   EmployeeSkills: ['employeeId','skillId','level','updatedAt'],
