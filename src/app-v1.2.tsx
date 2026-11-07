@@ -34,7 +34,31 @@ useEffect(()=>{if(!clientId||!spreadsheet){setMessage('Google configuration is m
 const setRows=(name:SheetName,rows:Row[])=>{setData(old=>({...old,[name]:rows}));setDirty(true)};
 const update=(name:SheetName,row:Row,field:string,value:string)=>setRows(name,data[name].map(r=>r===row?{...r,[field]:value}:r));
 const add=(name:SheetName,defaults:Row={})=>{const row:Row={...Object.fromEntries(sheetHeaders[name].map(k=>[k,''])),...Object.fromEntries(sheetHeaders[name].filter(k=>k==='active').map(k=>[k,'true'])),...defaults};if('id'in row&&!row.id)row.id=uid();setRows(name,[...data[name],row]);return row.id};
-const remove=(name:SheetName,row:Row)=>{if(window.confirm('Remove this record? Check references before saving.'))setRows(name,data[name].filter(r=>r!==row))};
+const remove=(name:SheetName,row:Row)=>{
+if(name==='Metrics'){
+ const axes=data.MetricAxes.filter(a=>a.metricId===row.id),axisIds=new Set(axes.map(a=>a.id));
+ const assignments=data.EmployeeMetrics.filter(a=>a.metricId===row.id);
+ const scores=data.Scores.filter(s=>axisIds.has(s.axisId));
+ if(!window.confirm('Delete metric "'+(row.name||row.id)+'" and its related data?\\n'+axes.length+' axes, '+assignments.length+' employee assignments, '+scores.length+' scores will be permanently removed after Save / Sync.'))return;
+ setData(old=>({...old,Metrics:old.Metrics.filter(x=>x.id!==row.id),MetricAxes:old.MetricAxes.filter(x=>x.metricId!==row.id),EmployeeMetrics:old.EmployeeMetrics.filter(x=>x.metricId!==row.id),Scores:old.Scores.filter(x=>!axisIds.has(x.axisId))}));setDirty(true);return;
+}
+if(name==='MetricAxes'){
+ const scores=data.Scores.filter(s=>s.axisId===row.id);
+ if(!window.confirm('Delete axis "'+(row.name||row.id)+'" and '+scores.length+' related scores?'))return;
+ setData(old=>({...old,MetricAxes:old.MetricAxes.filter(x=>x.id!==row.id),Scores:old.Scores.filter(x=>x.axisId!==row.id)}));setDirty(true);return;
+}
+if(window.confirm('Remove this record? Check references before saving.'))setRows(name,data[name].filter(r=>r!==row))
+};
+const cleanupOrphanMetrics=()=>{
+ const valid=new Set(data.Metrics.map(m=>m.id));
+ const orphanAxes=data.MetricAxes.filter(a=>!valid.has(a.metricId));
+ const orphanIds=new Set(orphanAxes.map(a=>a.id));
+ const orphanAssignments=data.EmployeeMetrics.filter(a=>!valid.has(a.metricId));
+ const orphanScores=data.Scores.filter(s=>orphanIds.has(s.axisId));
+ if(!orphanAxes.length&&!orphanAssignments.length){setMessage('No orphan metric references found.');return}
+ if(!window.confirm('Repair deleted Metric references in the current workspace?\\nRemove '+orphanAxes.length+' orphan axes, '+orphanAssignments.length+' orphan employee assignments and '+orphanScores.length+' related scores. Changes are not sent to Google Sheets until Save / Sync.'))return;
+ setData(old=>({...old,MetricAxes:old.MetricAxes.filter(a=>valid.has(a.metricId)),EmployeeMetrics:old.EmployeeMetrics.filter(a=>valid.has(a.metricId)),Scores:old.Scores.filter(s=>!orphanIds.has(s.axisId))}));setDirty(true);setMessage('Orphan Metric references removed locally. Review changes, then Save / Sync.');
+};
 const run=async(work:()=>Promise<void>)=>{setBusy(true);try{await work()}catch(e){setMessage('⚠ '+String(e))}finally{setBusy(false)}};
 const label=(name:SheetName,id:string)=>{const r=data[name].find(x=>x.id===id);return r?.name||r?.employeeCode||id};
 const field=(name:SheetName,row:Row,col:string)=>{
@@ -84,7 +108,7 @@ return <div className="app"><aside><h2>◈ EmpEval</h2><p>Capability & People ·
 {page==='Certificates'&&block('Certificate catalog · master data only','CertificateMaster')}
 {page==='Bookings'&&block('Bookings','Bookings')}
 {page==='Portfolio'&&block('Project portfolio','Portfolio')}
-{page==='Q-Pref Settings'&&<><div className="folder-tabs" role="tablist" aria-label="Q-Pref Settings tabs"><button role="tab" aria-selected={qPrefTab==='Metric'} onClick={()=>setQPrefTab('Metric')}>Metric</button><button role="tab" aria-selected={qPrefTab==='Q-Pref Period Time'} onClick={()=>setQPrefTab('Q-Pref Period Time')}>Q-Pref Period Time</button></div>{qPrefTab==='Metric'?<>{block('Metric catalog','Metrics')}<section className="panel"><h2>Metric axes</h2><select aria-label="Edit metric axes" value={selectedMetric} onChange={e=>setMetric(e.target.value)}>{data.Metrics.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select>{selectedMetric&&block('Axes','MetricAxes',r=>r.metricId===selectedMetric,{metricId:selectedMetric})}</section></>:<>{block('Evaluation periods','EvaluationPeriods')}</>}</>}
+{page==='Q-Pref Settings'&&<><div className="folder-tabs" role="tablist" aria-label="Q-Pref Settings tabs"><button role="tab" aria-selected={qPrefTab==='Metric'} onClick={()=>setQPrefTab('Metric')}>Metric</button><button role="tab" aria-selected={qPrefTab==='Q-Pref Period Time'} onClick={()=>setQPrefTab('Q-Pref Period Time')}>Q-Pref Period Time</button></div>{qPrefTab==='Metric'?<><section className="panel"><div className="row"><div><h2>Metric reference maintenance</h2><p>Repair orphan axes and scores left by deleted Metrics before Save / Sync.</p></div><button onClick={cleanupOrphanMetrics}>Repair deleted Metric references</button></div></section>{block('Metric catalog','Metrics')}<section className="panel"><h2>Metric axes</h2><select aria-label="Edit metric axes" value={selectedMetric} onChange={e=>setMetric(e.target.value)}>{data.Metrics.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select>{selectedMetric&&block('Axes','MetricAxes',r=>r.metricId===selectedMetric,{metricId:selectedMetric})}</section></>:<>{block('Evaluation periods','EvaluationPeriods')}</>}</>}
 <footer>EmpEval v1.2 · {connected?'Google connected':'Local demo'} · {dirty?'Unsaved':'Saved or unchanged'}</footer></main></div>
 }
 createRoot(document.getElementById('root')!).render(<AppErrorBoundary><App/></AppErrorBoundary>);
