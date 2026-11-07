@@ -6,7 +6,7 @@ export const sheetHeaders = {
   Bookings: ['id','employeeId','projectId','start','end','allocation','role'],
   Metrics: ['id','name','description','active','sortOrder'],
   MetricAxes: ['id','metricId','name','max','weight','color','sortOrder','active'],
-  EmployeeMetrics: ['employeeId','metricId','assignedAt'],
+  EmployeeMetrics: ['employeeId','metricId','assignedAt','periodId'],
   EvaluationPeriods: ['id','name','startDate','endDate','status','metricIds'],
   Scores: ['employeeId','axisId','periodId','value','updatedAt'],
   Skills: ['id','name','category','description','target','critical'],
