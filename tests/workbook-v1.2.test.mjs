@@ -24,10 +24,20 @@ test('metric scores require employee assignment and stay within axis maximum',()
   w.Employees=[{id:'e1'}];w.Metrics=[{id:'m1'}];w.MetricAxes=[{id:'a1',metricId:'m1',max:'5'}];w.EvaluationPeriods=[{id:'p1'}];
   w.Scores=[{employeeId:'e1',axisId:'a1',periodId:'p1',value:'4'}];
   assert.match(validateWorkbook(w).join(' '),/metric not assigned/);
-  w.EmployeeMetrics=[{employeeId:'e1',metricId:'m1'}];
+  w.EmployeeMetrics=[{employeeId:'e1',metricId:'m1',periodId:'p1'}];
   assert.deepEqual(validateWorkbook(w),[]);
   w.Scores[0].value='6';
   assert.match(validateWorkbook(w).join(' '),/invalid value/);
+});
+test('metric assignments are scoped to the selected evaluation period',()=>{
+  const w=emptyWorkbook();
+  w.Employees=[{id:'e1'}];w.Metrics=[{id:'m1'}];w.MetricAxes=[{id:'a1',metricId:'m1',max:'5'}];
+  w.EvaluationPeriods=[{id:'p1'},{id:'p2'}];
+  w.EmployeeMetrics=[{employeeId:'e1',metricId:'m1',periodId:'p1'}];
+  w.Scores=[{employeeId:'e1',axisId:'a1',periodId:'p2',value:'4'}];
+  assert.match(validateWorkbook(w).join(' '),/metric not assigned/);
+  w.EmployeeMetrics.push({employeeId:'e1',metricId:'m1',periodId:'p2'});
+  assert.deepEqual(validateWorkbook(w),[]);
 });
 test('certificate master and employee certificate are independent',()=>{
   const w=emptyWorkbook();
