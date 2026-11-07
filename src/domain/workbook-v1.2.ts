@@ -24,7 +24,7 @@ export function validateWorkbook(workbook:Workbook):string[] {
     for(const [i,row] of workbook[sheet].entries())if(!valid.has(row[field]))errors.push(sheet+' row '+(i+2)+': invalid '+field+' '+row[field]);
   };
   check('MetricAxes','metricId',metrics);
-  check('EmployeeMetrics','employeeId',employees);check('EmployeeMetrics','metricId',metrics);
+  check('EmployeeMetrics','employeeId',employees);check('EmployeeMetrics','metricId',metrics);check('EmployeeMetrics','periodId',periods);
   check('Scores','employeeId',employees);check('Scores','axisId',axes);check('Scores','periodId',periods);
   check('EmployeeSkills','employeeId',employees);check('EmployeeSkills','skillId',skills);
   check('Certifications','employeeId',employees);check('Certifications','certificateId',certs);
@@ -50,7 +50,7 @@ export function validateWorkbook(workbook:Workbook):string[] {
       seen.add(key);
     }
   };
-  unique('EmployeeMetrics',['employeeId','metricId']);
+  unique('EmployeeMetrics',['employeeId','metricId','periodId']);
   unique('EmployeeSkills',['employeeId','skillId']);
   unique('Scores',['employeeId','axisId','periodId']);
   for(const axis of workbook.MetricAxes){
@@ -59,7 +59,7 @@ export function validateWorkbook(workbook:Workbook):string[] {
   for(const score of workbook.Scores){
     const axis=workbook.MetricAxes.find(a=>a.id===score.axisId);
     if(axis&&(score.value===''||!Number.isFinite(Number(score.value))||Number(score.value)<0||Number(score.value)>Number(axis.max)))errors.push('Scores: invalid value for '+score.axisId);
-    if(axis&&!workbook.EmployeeMetrics.some(m=>m.employeeId===score.employeeId&&m.metricId===axis.metricId))errors.push('Scores: metric not assigned for '+score.employeeId);
+    if(axis&&!workbook.EmployeeMetrics.some(m=>m.employeeId===score.employeeId&&m.metricId===axis.metricId&&m.periodId===score.periodId))errors.push('Scores: metric not assigned for '+score.employeeId);
   }
   return errors;
 }
