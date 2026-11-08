@@ -16,7 +16,9 @@ test('all clean schema sheets encode with canonical headers',()=>{
 test('row codec retains values and refuses wrong schema',()=>{
   const rows=[{id:'e1',name:'Person',role:'Engineer',team:'A',active:'true',employeeCode:'EMP001'}];
   const payload=encodeSheet('Employees',rows);
-  assert.deepEqual(decodeSheet('Employees',payload.values),rows);
+  assert.deepEqual(decodeSheet('Employees',payload.values),[{...rows[0],mbti:'',phone:'',email:''}]);
+  const legacy=[sheetHeaders.Employees.slice(0,-3),Object.values(rows[0])];
+  assert.deepEqual(decodeSheet('Employees',legacy),[{...rows[0],mbti:'',phone:'',email:''}]);
   assert.throws(()=>decodeSheet('Employees',[['id','name']]),/Unexpected schema/);
 });
 test('metric scores require employee assignment and stay within axis maximum',()=>{
