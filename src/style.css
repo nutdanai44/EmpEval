@@ -65,3 +65,5 @@ input::placeholder{color:#a1accb}label{color:#c7cee8}p,small{color:#aeb8d5}table
 .panel{border-radius:17px}.panel>.row:first-child{flex-wrap:wrap}.panel>.row:first-child h2{margin:0}.panel>.row:first-child>button{white-space:nowrap}
 .folder-tabs{scrollbar-width:thin}.folder-tabs button{white-space:nowrap}
 @media(max-width:740px){.employee-switcher-controls{grid-template-columns:1fr}.employee-switcher-title{align-items:flex-start}.employee-switcher .primary-add{font-size:12px}.data-table td,.data-table th{padding:9px}}
+
+.skill-radar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;margin:18px 0}.skill-radar-card{min-width:0;background:linear-gradient(145deg,#202b4b,#151e35);border:1px solid #3e4c70;border-radius:17px;padding:16px;box-shadow:0 8px 25px #080e241a}.skill-radar-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.skill-radar-card-head strong{color:#f0f4ff;font-size:14px}.skill-radar-card-head span{color:#9eafd0;font-size:12px}.skill-radar-empty{min-height:240px;display:grid;place-items:center;text-align:center;color:#a7b5d4;font-size:13px;padding:20px}
