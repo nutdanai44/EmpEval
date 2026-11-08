@@ -1,6 +1,6 @@
 /** Canonical empty-workbook schema for EmpEval v1.2. No legacy migration required. */
 export const sheetHeaders = {
-  Employees: ['id','name','role','team','active','employeeCode'],
+  Employees: ['id','name','role','team','active','employeeCode','mbti','phone','email'],
   Organizations: ['id','name'],
   Projects: ['id','orgId','name','periodStart','periodEnd','pmName'],
   Bookings: ['id','employeeId','projectId','start','end','allocation','utilize','role'],
