@@ -89,7 +89,7 @@ const table=(name:SheetName,filter?:(row:Row)=>boolean,exclude:string[]=[])=>{co
 const block=(title:string,name:SheetName,filter?:(row:Row)=>boolean,defaults:Row={},exclude:string[]=[])=> <section className="panel"><div className="row"><h2>{title}</h2><button onClick={()=>add(name,defaults)}>+ Add</button></div>{table(name,filter,exclude)}</section>;
 // Career master records are stored as JSON values in Meta to preserve compatibility with existing 16-sheet workbooks.
 const careerRead=(prefix:string):Row[]=>data.Meta.filter(m=>m.key.startsWith('career:'+prefix+':')).flatMap(m=>{try{const value=JSON.parse(m.value);return value&&typeof value==='object'?[value as Row]:[]}catch{return []}});
-const careerWrite=(prefix:string,row:Row)=>setRows('Meta',[...data.Meta.filter(m=>m.key!=='career:'+prefix+':'+row.id),{key:'career:'+prefix+':'+row.id,value:JSON.stringify(row)}]);
+const careerWrite=(prefix:string,row:Row)=>{const key='career:'+prefix+':'+row.id;const value=JSON.stringify(row);setRows('Meta',data.Meta.some(m=>m.key===key)?data.Meta.map(m=>m.key===key?{...m,value}:m):[...data.Meta,{key,value}]);};
 const careerDelete=(prefix:string,id:string)=>setRows('Meta',data.Meta.filter(m=>m.key!=='career:'+prefix+':'+id));
 const careerPaths=careerRead('path'),careerLevels=careerRead('level'),careerSkills=careerRead('skill'),careerRequirements=careerRead('requirement'),careerAssignments=careerRead('assignment');
 const careerInput=(kind:string,row:Row,col:string,type='text')=><input aria-label={col} type={type} value={row[col]||''} onChange={e=>careerWrite(kind,{...row,[col]:e.target.value})}/>;
