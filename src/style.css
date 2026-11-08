@@ -31,3 +31,18 @@ input::placeholder{color:#a1accb}label{color:#c7cee8}p,small{color:#aeb8d5}table
 .command-panel .stats section{background:#151b37bd;backdrop-filter:blur(8px)}.command-panel h3{font-size:19px;margin:24px 0 12px}.command-panel button{font-weight:600}
 .roster-panel{border-color:#4b487e}.roster-panel>div>div>button{box-shadow:0 8px 26px #080d2c88;transition:transform .2s,box-shadow .2s,border-color .2s}.roster-panel>div>div>button:hover{transform:translateY(-4px);border-color:#aa9bff!important;box-shadow:0 15px 38px #060b26bb}
 @media(max-width:580px){aside{border-right:0;border-bottom:1px solid #41446d}aside button{font-size:12px}main{padding:16px}.panel{padding:16px}.command-title{font-size:27px}.stats{gap:9px}.stats section{padding:13px}.stats strong{font-size:23px}}
+
+
+/* Modern dashboard controls, readable bilingual navigation */
+.language-toggle{display:flex;gap:5px;padding:4px;background:#0e1530;border:1px solid #394369;border-radius:12px;align-self:flex-start}
+.language-toggle button{padding:6px 12px;border:0;border-radius:8px;background:transparent;color:#aeb9da;font-size:12px;font-weight:800;letter-spacing:.05em}
+.language-toggle button[aria-pressed="true"]{background:linear-gradient(120deg,#8b72ed,#5d67d7);color:white;box-shadow:0 3px 12px #5146aa66}
+.roster-panel>div:has(>label){background:#141c36;border:1px solid #343e64;padding:18px;border-radius:16px;gap:14px!important}
+.roster-panel label{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:700;color:#b6c2e4;letter-spacing:.02em;min-width:0}
+.roster-panel label input,.roster-panel label select{width:100%;min-width:0;height:43px;padding:0 12px;background:#232d4e;border:1px solid #445176;border-radius:10px;color:#f0f3ff;font-size:13px;font-weight:500}
+.roster-panel label input:hover,.roster-panel label select:hover{border-color:#8b7bd9}
+.roster-panel label button{height:43px;white-space:nowrap;border-radius:10px;background:#343b63}
+.roster-panel .row{flex-wrap:wrap}.roster-panel .row strong{padding:7px 12px;background:#333b62;border:1px solid #4b5480;border-radius:999px;font-size:13px;color:#cfc8ff}
+.period-actions{display:grid;gap:10px;margin-top:18px}.period-action{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border:1px solid #3c476d;background:#202947;border-radius:12px}.period-action span{display:flex;flex-direction:column;gap:5px}.period-action small{font-size:12px}.period-action button{white-space:nowrap}.switch-label{display:flex;align-items:center;gap:8px;font-size:13px}
+@media(max-width:680px){.roster-panel>div:has(>label){grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:12px}.roster-panel label:first-child{grid-column:1/-1}.period-action{align-items:flex-start}.language-toggle{margin:4px 0}}
+@media(max-width:400px){.roster-panel>div:has(>label){grid-template-columns:1fr!important}.roster-panel label:first-child{grid-column:auto}}
