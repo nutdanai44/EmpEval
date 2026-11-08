@@ -21,7 +21,7 @@ try {
   await page.getByRole('heading', { name: 'Dashboard', level: 1 }).waitFor({timeout:10000});
   await page.getByRole('button', { name: 'Employees' }).click();
   await page.getByRole('heading', { name: 'Employee performance comparison' }).waitFor();
-  await page.getByRole('tab', { name: '+ Add' }).click();
+  await page.getByRole('button', { name: '+ Add employee' }).click();
   await page.getByRole('tab', { name: 'Metrics' }).click();
   await page.getByRole('heading', { name: 'Assigned metrics' }).waitFor();
   await page.getByRole('tab', { name: 'Skills' }).click();
@@ -30,8 +30,15 @@ try {
   await page.getByRole('button', { name: '+ Add earned certificate' }).waitFor();
   await page.getByRole('tab', { name: 'Comments' }).click();
   await page.getByRole('textbox', { name: 'New comment' }).fill('Initial review');
-  await page.getByRole('button', { name: 'Add comment' }).click();
+  await page.getByRole('button', { name: '+ Add comment' }).click();
   await page.getByText('Initial review').waitFor();
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Edit comment' }).fill('Updated review');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await page.getByText('Updated review').waitFor();
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.getByText('Updated review').waitFor({ state: 'detached' });
   await page.getByRole('button', { name: 'Projects' }).click();
   await page.getByRole('tab', { name: 'Organizations' }).click();
   await page.getByRole('heading', { name: 'Organizations', level: 2 }).waitFor();
