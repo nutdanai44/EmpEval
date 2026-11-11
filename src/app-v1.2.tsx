@@ -1,4 +1,4 @@
-import React,{useEffect,useRef,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import{createRoot}from'react-dom/client';
 import{RadarChart,Radar,PolarGrid,PolarAngleAxis,PolarRadiusAxis,ResponsiveContainer,Legend,Tooltip,BarChart,Bar,XAxis,YAxis,CartesianGrid}from'recharts';
 import{sheetHeaders,sheetNames,emptyWorkbook,type SheetName}from './domain/schema-v1.2';
@@ -6,6 +6,7 @@ import{loadWorkbook,saveWorkbook,initializeEmptyWorkbook}from './domain/sheets-v
 import{validateWorkbook,type Workbook}from './domain/workbook-v1.2';
 import {monthlyBooking,bookingOverlaps,bookingStatus} from './domain/booking';
 import {clientId,spreadsheet,restoreToken,prepareGoogle,signIn,transport} from './integrations/google-auth';
+import {AppErrorBoundary} from './components/AppErrorBoundary';
 import './style.css';
 type Row=Record<string,string>;
 const uid=()=>crypto.randomUUID();
@@ -13,12 +14,6 @@ const chartLabel=(value:unknown,max=22)=>{const text=String(value??'');return te
 const names=['Dashboard','Employees','Projects','Skills','Certificates','Career Path','Q-Pref Settings'] as const;
 const master:{[key:string]:SheetName}={Skills:'Skills',Certificates:'CertificateMaster',Metrics:'Metrics',Projects:'Projects'};
 const relation:{[key:string]:SheetName}={orgId:'Organizations',projectId:'Projects',employeeId:'Employees',metricId:'Metrics',skillId:'Skills',certificateId:'CertificateMaster',axisId:'MetricAxes',periodId:'EvaluationPeriods'};
-class AppErrorBoundary extends React.Component<{children:React.ReactNode},{error:string|null}>{
-state={error:null as string|null};
-static getDerivedStateFromError(error:Error){return {error:error.message||String(error)}}
-componentDidCatch(error:Error,info:React.ErrorInfo){console.error('EmpEval render failed',error,info.componentStack)}
-render(){if(this.state.error)return <div style={{padding:32,fontFamily:'system-ui',color:'#222b45'}}><h1>EmpEval could not render</h1><p>Runtime error: {this.state.error}</p><button onClick={()=>window.location.reload()}>Reload / โหลดใหม่</button><p>Please share this error message so it can be fixed. / กรุณาส่งข้อความข้อผิดพลาดนี้เพื่อให้ตรวจสอบและแก้ไข</p></div>;return this.props.children}
-}
 function App(){
 const [lang,setLang]=useState<'en'|'th'>(()=>localStorage.getItem('empeval-lang')==='th'?'th':'en'),[showClosedPeriods,setShowClosedPeriods]=useState(false),[dashboardAction,setDashboardAction]=useState('all'),[dashboardMonth,setDashboardMonth]=useState(new Date().getMonth()),[dashboardYear,setDashboardYear]=useState(new Date().getFullYear()),[dashboardQuery,setDashboardQuery]=useState(''),[dashboardStatus,setDashboardStatus]=useState('all'),[dashboardSkill,setDashboardSkill]=useState(''),[dashboardSkillLevel,setDashboardSkillLevel]=useState('0'),[dashboardSort,setDashboardSort]=useState('manual'),[dragEmployee,setDragEmployee]=useState(''),[showClosedProjects,setShowClosedProjects]=useState(false);
 const [overviewTab,setOverviewTab]=useState<'Stat'|'Skill'|'Career Skill'|'Booking'|'Heatmap'>('Stat'),[careerTab,setCareerTab]=useState<'Paths'|'Levels'|'Career Skills'|'Requirements'>('Paths'),[heatmapTeam,setHeatmapTeam]=useState('all'),[heatmapSkills,setHeatmapSkills]=useState<string[]>([]),[requirementPathFilter,setRequirementPathFilter]=useState(''),[requirementLevelFilter,setRequirementLevelFilter]=useState(''),[overviewEmployees,setOverviewEmployees]=useState<string[]>([]),[overviewSkills,setOverviewSkills]=useState<string[]>([]),[overviewYear,setOverviewYear]=useState(String(new Date().getFullYear())),[bookingYear,setBookingYear]=useState(String(new Date().getFullYear())),[qPrefTab,setQPrefTab]=useState<'Metric'|'Q-Pref Period Time'>('Metric'),[progress,setProgress]=useState<{label:string;done:number;total:number}|null>(null),[syncing,setSyncing]=useState(false),[data,setData]=useState<Workbook>(emptyWorkbook),[page,setPage]=useState<string>('Dashboard'),[employee,setEmployee]=useState(''),[employeeFinder,setEmployeeFinder]=useState(''),[sub,setSub]=useState('Profile'),[projectTab,setProjectTab]=useState<'Projects'|'Organizations'>('Projects'),[metric,setMetric]=useState(''),[metricPeriod,setMetricPeriod]=useState(''),[duplicateSource,setDuplicateSource]=useState(''),[period,setPeriod]=useState(''),[compareMetrics,setCompareMetrics]=useState<string[]|null>(null),[revision,setRevision]=useState(''),[connected,setConnected]=useState(false),[dirty,setDirty]=useState(false),[busy,setBusy]=useState(false),[commentDraft,setCommentDraft]=useState(''),[editingCommentId,setEditingCommentId]=useState(''),[editingCommentText,setEditingCommentText]=useState(''),[message,setMessage]=useState('Empty demo workspace — connect Google to load your workbook');
