@@ -43,7 +43,7 @@ try {
   const bookingFilter = await page.getByRole('combobox', {name:'Filter booking status'}).inputValue();
   if (bookingFilter !== 'all') throw Error('Employees KPI did not clear booking filter: '+bookingFilter);
   await page.getByRole('button', {name:'Metric Comparison'}).click();
-  await page.getByRole('heading', {name:'Metric Comparison'}).waitFor();
+  await page.getByRole('heading', {name:'Metric Comparison', level:1}).waitFor();
   await page.getByRole('heading', {name:/Select Metrics/}).waitFor();
   await page.getByRole('heading', {name:/Score Comparison/}).waitFor();
   await page.getByRole('button', {name:'Dashboard',exact:true}).click();
