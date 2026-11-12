@@ -41,10 +41,25 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          name: empeval-dist
-          path: dist
+          node-version: "22"
+      - run: npm ci
+      - name: Validate Google Sheets deployment configuration
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SPREADSHEET_ID: ${{ vars.VITE_SPREADSHEET_ID }}
+        run: |
+          if [ -z "$VITE_GOOGLE_CLIENT_ID" ] || [ -z "$VITE_SPREADSHEET_ID" ]; then
+            echo "::error::Google Sheets configuration missing. Set VITE_GOOGLE_CLIENT_ID and VITE_SPREADSHEET_ID in the github-pages environment or repository variables."
+            exit 1
+          fi
+      - name: Build production with github-pages environment variables
+        run: npm run build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SPREADSHEET_ID: ${{ vars.VITE_SPREADSHEET_ID }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
