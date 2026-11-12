@@ -19,6 +19,29 @@ try {
   page.on('response', r => { if (r.status() >= 400 && new URL(r.url()).origin === new URL(url).origin) errors.push('HTTP ' + r.status() + ' ' + r.url()); });
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: 'Dashboard', level: 1 }).waitFor({timeout:10000});
+  // v1.3 dashboard: command center, global filters, KPI and insight sections.
+  await page.getByRole('heading', { name: 'Team Command Center' }).waitFor();
+  for (const label of ['Dashboard year','Dashboard month','Dashboard evaluation period']) {
+    await page.getByRole('combobox', {name:label}).waitFor();
+  }
+  for (const heading of ['Action Center','Booking Coverage','Evaluation Progress','Team Skills','Employee roster']) {
+    await page.getByRole('heading', {name:heading,exact:true}).waitFor();
+  }
+  await page.getByRole('button', {name:/Employees.*Team members/}).waitFor();
+  await page.getByRole('button', {name:/Fully billable.*100% billable/}).waitFor();
+  await page.getByRole('button', {name:/Evaluation pending.*Assigned, incomplete/}).waitFor();
+  await page.getByRole('button', {name:/Invalid bookings.*Needs correction/}).waitFor();
+  await page.getByText('No pending edits').waitFor();
+  await page.getByRole('combobox', {name:'Dashboard month'}).selectOption('0');
+  await page.getByRole('combobox', {name:'Dashboard month'}).selectOption('10');
+  await page.getByRole('button', {name:/Invalid bookings.*Needs correction/}).click();
+  await page.getByRole('button', {name:'Reset filters'}).click();
+  await page.getByRole('button', {name:'Metric Comparison'}).click();
+  await page.getByRole('heading', {name:'Metric Comparison'}).waitFor();
+  await page.getByRole('heading', {name:/Select Metrics/}).waitFor();
+  await page.getByRole('heading', {name:/Score Comparison/}).waitFor();
+  await page.getByRole('button', {name:'Dashboard',exact:true}).click();
+  await page.getByRole('heading', {name:'Team Command Center'}).waitFor();
   await page.getByRole('button', { name: 'Employees' }).click();
   await page.getByRole('heading', { name: 'Employee performance comparison' }).waitFor();
   await page.getByRole('button', { name: '+ Add employee' }).click();
