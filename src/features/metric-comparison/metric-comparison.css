@@ -44,3 +44,31 @@
 .metric-compare-block .metric-compare-axis span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;line-clamp:4;overflow:hidden;white-space:normal;overflow-wrap:anywhere}
 .metric-compare-block .metric-compare-scroll th.metric-compare-name{width:180px;min-width:180px;max-width:180px}
 @media(max-width:700px){.metric-compare-block .metric-compare-scroll th.metric-compare-name{width:130px;min-width:130px;max-width:130px}.metric-compare-block .metric-compare-scroll th:not(.metric-compare-name),.metric-compare-block .metric-compare-scroll td{width:80px;min-width:80px;max-width:80px}}
+
+/* Force multiline axis labels despite generic table/header rules. */
+.metric-compare-block .metric-compare-scroll thead th.metric-compare-axis{
+ white-space:normal!important;
+ height:auto!important;
+ min-height:84px;
+ vertical-align:top;
+ overflow:visible;
+ text-overflow:clip;
+ padding:10px 6px;
+}
+.metric-compare-block .metric-compare-scroll thead th.metric-compare-axis span{
+ display:block!important;
+ white-space:normal!important;
+ overflow:visible!important;
+ text-overflow:clip!important;
+ overflow-wrap:anywhere;
+ word-break:break-word;
+ line-clamp:unset;
+ -webkit-line-clamp:unset;
+ max-width:100%;
+ line-height:1.35;
+}
+.metric-compare-block .metric-compare-scroll thead th.metric-compare-axis small{
+ display:block;
+ margin-top:6px;
+ white-space:normal;
+}
