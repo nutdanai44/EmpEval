@@ -1,5 +1,34 @@
-/** Booking calculations shared by dashboards and employee views. */
+/** Shared booking calculations. All dates are inclusive, UTC calendar dates. */
 type Row=Record<string,string>;
-export const monthlyBooking=(bookings:Row[],employeeId:string,year:number,month:number)=>{const first=new Date(Date.UTC(year,month,1)),last=new Date(Date.UTC(year,month+1,0));const validDate=(s:string)=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const d=new Date(s+'T00:00:00Z');return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===s};const daily=new Map<number,{allocation:number;billable:number}>();for(let d=new Date(first);d<=last;d.setUTCDate(d.getUTCDate()+1))if(d.getUTCDay()!==0&&d.getUTCDay()!==6)daily.set(d.getTime(),{allocation:0,billable:0});let invalid=false,hasBooking=false;for(const b of bookings.filter(x=>x.employeeId===employeeId)){const start=b.start||'',end=b.end||start,raw=Number(b.allocation);if(!validDate(start)||!validDate(end)||b.allocation===''||!Number.isFinite(raw)||raw<0||raw>100){invalid=true;continue}const a=new Date(start+'T00:00:00Z'),z=new Date(end+'T00:00:00Z');if(z<a){invalid=true;continue}for(const [day,totals] of daily){if(day<a.getTime()||day>z.getTime())continue;hasBooking=true;totals.allocation+=raw;if(b.utilize!=='false')totals.billable+=raw}}const days=daily.size||1;let allocated=0,billable=0;for(const totals of daily.values()){allocated+=totals.allocation;billable+=totals.billable}return {allocation:allocated/days,billable:billable/days,invalid,hasBooking}};
-export const bookingOverlaps=(bookings:Row[],employeeId:string,year:number,month:number)=>{const start=new Date(Date.UTC(year,month,1)),end=new Date(Date.UTC(year,month+1,0));const items=bookings.filter(b=>b.employeeId===employeeId).map(b=>({row:b,from:new Date((b.start||'')+'T00:00:00Z'),to:new Date((b.end||b.start||'')+'T00:00:00Z')})).filter(b=>Number.isFinite(b.from.getTime())&&Number.isFinite(b.to.getTime())&&b.from<=b.to&&b.from<=end&&b.to>=start);const pairs:Array<{first:Row;second:Row}>=[];for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){const a=items[i],b=items[j];const lo=new Date(Math.max(a.from.getTime(),b.from.getTime(),start.getTime())),hi=new Date(Math.min(a.to.getTime(),b.to.getTime(),end.getTime()));if(lo<=hi){let workday=false;for(let d=new Date(lo);d<=hi;d.setUTCDate(d.getUTCDate()+1))if(d.getUTCDay()!==0&&d.getUTCDay()!==6){workday=true;break}if(workday)pairs.push({first:a.row,second:b.row})}}return pairs};
-export const bookingStatus=(a:number,b:number)=>a>100.00001?'overbooked':a<99.99999?'underallocated':b<99.99999?'nonbillable':'billable';
+const validDate=(s:string)=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(Date.parse(s))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s;
+const workdays=(start:Date,end:Date)=>{const days:Date[]=[];for(let d=new Date(start);d<=end;d.setUTCDate(d.getUTCDate()+1)){if(d.getUTCDay()!==0&&d.getUTCDay()!==6)days.push(new Date(d));}return days};
+const activeRows=(bookings:Row[],employeeId:string)=>bookings.filter(b=>b.employeeId===employeeId&&validDate(b.start||'')&&validDate(b.end||b.start||'')&&(b.end||b.start)>=b.start&&b.allocation!==''&&Number.isFinite(Number(b.allocation))&&Number(b.allocation)>=0&&Number(b.allocation)<=100&&(!b.utilize||['true','false'].includes(b.utilize.toLowerCase())));
+export const bookingDaily=(bookings:Row[],employeeId:string,year:number,month:number)=>{
+ const first=new Date(Date.UTC(year,month,1)),last=new Date(Date.UTC(year,month+1,0));
+ const rows=activeRows(bookings,employeeId);
+ return workdays(first,last).map(date=>{
+  const day=date.toISOString().slice(0,10),active=rows.filter(b=>b.start<=day&&(b.end||b.start)>=day);
+  const rawAllocation=active.reduce((s,b)=>s+Number(b.allocation),0);
+  const rawBillable=active.filter(b=>b.utilize!=='false').reduce((s,b)=>s+Number(b.allocation),0);
+  return {date:day,rawAllocation,rawBillable,allocation:Math.min(100,rawAllocation),billable:Math.min(100,rawBillable),overbooked:rawAllocation>100,bookings:active};
+ });
+};
+export const monthlyBooking=(bookings:Row[],employeeId:string,year:number,month:number)=>{
+ const rows=bookings.filter(b=>b.employeeId===employeeId);
+ const invalid=rows.some(b=>!validDate(b.start||'')||!validDate(b.end||b.start||'')||(b.end||b.start)<b.start||b.allocation===''||!Number.isFinite(Number(b.allocation))||Number(b.allocation)<0||Number(b.allocation)>100||(!!b.utilize&&!['true','false'].includes(b.utilize.toLowerCase())));
+ const daily=bookingDaily(bookings,employeeId,year,month),days=daily.length||1;
+ return {allocation:daily.reduce((s,d)=>s+d.allocation,0)/days,billable:daily.reduce((s,d)=>s+d.billable,0)/days,invalid,hasBooking:daily.some(d=>d.bookings.length>0),overbooked:daily.some(d=>d.overbooked),overbookedDays:daily.filter(d=>d.overbooked).map(d=>d.date)};
+};
+export const bookingOverlaps=(bookings:Row[],employeeId:string,year:number,month:number)=>{
+ const pairs:Array<{first:Row;second:Row}>=[];
+ const seen=new Set<string>();
+ for(const day of bookingDaily(bookings,employeeId,year,month)){
+  const active=day.bookings.filter(b=>Number(b.allocation)>0);
+  for(let i=0;i<active.length;i++)for(let j=i+1;j<active.length;j++){
+   const a=active[i],b=active[j],key=[a.id||String(i),b.id||String(j)].sort().join('|');
+   if(!seen.has(key)){seen.add(key);pairs.push({first:a,second:b});}
+  }
+ }
+ return pairs;
+};
+export const bookingStatus=(allocation:number,billable:number)=>allocation<99.99999?'underallocated':billable<99.99999?'nonbillable':'billable';
