@@ -3,7 +3,8 @@ export function displayMetricScore(raw:string|undefined,maxValue:string,reverse:
  if(raw===undefined||raw.trim()==='')return null;
  const value=Number(raw),max=Number(maxValue);
  if(!Number.isFinite(value)||!Number.isFinite(max)||max<=0||value<0||value>max)return null;
- return reverse?max-value:value;
+ // Metric scales are 1..max; reverse 1->max, 2->max-1, etc.
+ return reverse?max+1-value:value;
 }
 export function metricAverage(scores:Array<{value:number|null;max:number}>):number|null{
  const valid=scores.filter((s):s is {value:number;max:number}=>s.value!==null&&Number.isFinite(s.value)&&Number.isFinite(s.max)&&s.max>0);
