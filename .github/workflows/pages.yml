@@ -1,0 +1,51 @@
+name: Deploy GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    name: Production build and deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install
+      - name: Validate production configuration
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SPREADSHEET_ID: ${{ vars.VITE_SPREADSHEET_ID }}
+        run: |
+          if [ -z "$VITE_GOOGLE_CLIENT_ID" ] || [ -z "$VITE_SPREADSHEET_ID" ]; then
+            echo "::error::Missing VITE_GOOGLE_CLIENT_ID or VITE_SPREADSHEET_ID. Configure variables in github-pages environment or repository."
+            exit 1
+          fi
+      - name: Production build
+        run: npm run build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SPREADSHEET_ID: ${{ vars.VITE_SPREADSHEET_ID }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify published site responds
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          curl --fail --location --retry 5 --retry-delay 3 --silent --show-error "$PAGE_URL" > /dev/null
