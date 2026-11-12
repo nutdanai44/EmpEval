@@ -112,3 +112,8 @@ input::placeholder{color:#a1accb}label{color:#c7cee8}p,small{color:#aeb8d5}table
 #dashboard-v13-roster{scroll-margin-top:18px}
 @media(max-width:900px){.dashboard-v13-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-v13-insights{grid-template-columns:1fr}}
 @media(max-width:520px){.dashboard-v13-filters{width:100%}.dashboard-v13-filters label{flex:1;min-width:85px}.dashboard-v13-filters select{width:100%;max-width:none}.dashboard-v13-kpis button{padding:12px}.dashboard-v13-card{padding:13px}}
+
+.dashboard-v13-pagination{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap;font-size:12px}
+.dashboard-v13-pagination button{border:1px solid var(--border,#cbd5e1);border-radius:8px;padding:7px 12px;background:transparent;color:inherit;cursor:pointer}
+.dashboard-v13-pagination button:disabled{opacity:.45;cursor:not-allowed}
+.dashboard-v13-pagination span{font-variant-numeric:tabular-nums}
