@@ -35,7 +35,13 @@ try {
   await page.getByRole('combobox', {name:'Dashboard month'}).selectOption('0');
   await page.getByRole('combobox', {name:'Dashboard month'}).selectOption('10');
   await page.getByRole('button', {name:/Invalid bookings.*Needs correction/}).click();
-  await page.getByRole('button', {name:'Reset filters'}).click();
+  // Verify the KPI applies its intended roster filter, then clear it using another KPI.
+  await page.getByRole('combobox', {name:'Filter booking status'}).waitFor({timeout:10000});
+  const selectedBookingFilter = await page.getByRole('combobox', {name:'Filter booking status'}).inputValue();
+  if (selectedBookingFilter !== 'invalid') throw Error('Invalid bookings KPI did not apply filter: '+selectedBookingFilter);
+  await page.getByRole('button', {name:/Employees.*Team members/}).click();
+  const bookingFilter = await page.getByRole('combobox', {name:'Filter booking status'}).inputValue();
+  if (bookingFilter !== 'all') throw Error('Employees KPI did not clear booking filter: '+bookingFilter);
   await page.getByRole('button', {name:'Metric Comparison'}).click();
   await page.getByRole('heading', {name:'Metric Comparison'}).waitFor();
   await page.getByRole('heading', {name:/Select Metrics/}).waitFor();
