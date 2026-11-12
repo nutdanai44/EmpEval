@@ -32,6 +32,9 @@ try {
   await page.getByRole('button', {name:/Evaluation pending.*Assigned, incomplete/}).waitFor();
   await page.getByRole('button', {name:/Invalid bookings.*Needs correction/}).waitFor();
   await page.getByText('No pending edits').waitFor();
+  // With an empty workbook the Action Center must not show unnecessary pagination.
+  const actionCenterPages = page.getByRole('navigation', {name:'Action Center pages'});
+  if (await actionCenterPages.count() !== 0) throw Error('Unexpected Action Center pagination with no alerts');
   await page.getByRole('combobox', {name:'Dashboard month'}).selectOption('0');
   await page.getByRole('combobox', {name:'Dashboard month'}).selectOption('10');
   await page.getByRole('button', {name:/Invalid bookings.*Needs correction/}).click();
