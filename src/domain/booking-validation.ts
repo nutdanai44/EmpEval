@@ -16,7 +16,7 @@ export function validateBookingRows(rows:BookingRow[],employeeIds:Set<string>,pr
 /** Uses the same weekday-weighted capacity rules as the Dashboard. */
 import {monthlyBooking} from './booking.ts';
 export function monthlyBookingCoverage(rows:BookingRow[],employeeId:string,month:string){
- if(!/^\\d{4}-(0[1-9]|1[0-2])$/.test(month))throw Error('Invalid month');
+ if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw Error('Invalid month');
  const [year,m]=month.split('-').map(Number);
  const result=monthlyBooking(rows as unknown as Record<string,string>[],employeeId,year,m-1);
  return {allocation:result.allocation,billable:result.billable,available:100-result.allocation,overbooked:result.overbooked,bookingCount:rows.filter(r=>r.employeeId===employeeId&&r.start<=month+'-31'&&(r.end||r.start)>=month+'-01').length};
