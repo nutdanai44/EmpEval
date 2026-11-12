@@ -6,7 +6,13 @@ export function displayMetricScore(raw:string|undefined,maxValue:string,reverse:
  // Metric scales are 1..max; reverse 1->max, 2->max-1, etc.
  return reverse?max+1-value:value;
 }
-export function metricAverage(scores:Array<{value:number|null;max:number}>):number|null{
- const valid=scores.filter((s):s is {value:number;max:number}=>s.value!==null&&Number.isFinite(s.value)&&Number.isFinite(s.max)&&s.max>0);
- return valid.length?valid.reduce((sum,s)=>sum+s.value/s.max*100,0)/valid.length:null;
+/** Weighted score on the axes' native scale. Missing/invalid scores and non-positive weights are excluded. */
+export function metricAverage(scores:Array<{value:number|null;max:number;weight:number}>):{score:number;max:number}|null{
+ const valid=scores.filter((s):s is {value:number;max:number;weight:number}=>s.value!==null&&Number.isFinite(s.value)&&Number.isFinite(s.max)&&s.max>0&&Number.isFinite(s.weight)&&s.weight>0);
+ if(!valid.length)return null;
+ const totalWeight=valid.reduce((sum,s)=>sum+s.weight,0);
+ return {
+  score:valid.reduce((sum,s)=>sum+s.value*s.weight,0)/totalWeight,
+  max:valid.reduce((sum,s)=>sum+s.max*s.weight,0)/totalWeight
+ };
 }
