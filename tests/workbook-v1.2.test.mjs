@@ -6,12 +6,13 @@ import {decodeSheet, encodeSheet, encodeWorkbook, validateWorkbook} from '../src
 test('all clean schema sheets encode with canonical headers',()=>{
   const workbook=emptyWorkbook();
   const payload=encodeWorkbook(workbook);
-  assert.equal(payload.length,16);
+  assert.equal(payload.length,sheetNames.length);
   for(const entry of payload){
     const name=entry.range.split('!')[0];
     assert.deepEqual(entry.values[0],sheetHeaders[name]);
   }
-  assert.equal(sheetNames.length,16);
+  assert.ok(sheetNames.includes('BookingSkills'));
+  assert.deepEqual(payload.find(entry=>entry.range==='BookingSkills!A1').values[0],sheetHeaders.BookingSkills);
 });
 test('row codec retains values and refuses wrong schema',()=>{
   const rows=[{id:'e1',name:'Person',role:'Engineer',team:'A',active:'true',employeeCode:'EMP001'}];

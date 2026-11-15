@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import {initializeEmptyWorkbook,loadWorkbook,saveWorkbook} from '../src/domain/sheets-v1.2.ts';
 import {sheetHeaders,sheetNames,emptyWorkbook} from '../src/domain/schema-v1.2.ts';
 
-test('new empty spreadsheet initializes all 16 tabs and canonical headers',async()=>{
+test('new empty spreadsheet initializes all schema tabs and canonical headers',async()=>{
   const calls=[];
   const api=async(path,method='GET',body)=>{calls.push({path,method,body});if(path==='?fields=sheets.properties.title')return {sheets:[]};return {}};
   await initializeEmptyWorkbook(api);
-  assert.equal(calls[1].body.requests.length,16);
-  assert.equal(calls[2].body.data.length,16);
+  assert.equal(calls[1].body.requests.length,sheetNames.length);
+  assert.equal(calls[2].body.data.length,sheetNames.length);
   assert.deepEqual(calls[2].body.data.find(d=>d.range==='Scores!A1').values[0],sheetHeaders.Scores);
+  assert.deepEqual(calls[2].body.data.find(d=>d.range==='BookingSkills!A1').values[0],sheetHeaders.BookingSkills);
 });
 test('initialization refuses a spreadsheet with any existing EmpEval tab',async()=>{
   const api=async()=>({sheets:[{properties:{title:'Employees'}}]});
