@@ -8,7 +8,9 @@ const range=(s:string)=>'/values/'+encodeURIComponent(s);
 export async function loadWorkbook(api:SheetsTransport):Promise<{workbook:Workbook;revision:string}> {
   const result={} as Workbook;
   for(const name of sheetNames){
-    const response=await api(range(name+'!A1:Z10000'));
+    let response:any;
+    try {response=await api(range(name+'!A1:Z10000'))}
+    catch(error){if(name==='BookingSkills'&&String(error).includes('Google Sheets 400')){result.BookingSkills=[];continue}throw error}
     result[name]=decodeSheet(name,response.values||[]);
   }
   const meta=result.Meta.find(row=>row.key==='revision');
@@ -34,6 +36,10 @@ export async function saveWorkbook(api:SheetsTransport,workbook:Workbook,expecte
   if(errors.length)throw Error('Invalid workbook: '+errors.slice(0,5).join('; '));
   const current=await loadWorkbook(api);
   if(current.revision!==expectedRevision)throw Error('Remote workbook changed; reload before saving');
+  // Migrate pre-BookingSkills workbooks only when saving; leave all existing tabs intact.
+  const info=await api('?fields=sheets.properties.title');
+  const titles=new Set((info.sheets||[]).map((sheet:any)=>sheet.properties.title));
+  if(!titles.has('BookingSkills'))await api(':batchUpdate','POST',{requests:[{addSheet:{properties:{title:'BookingSkills'}}}]});
   const nextRevision=crypto.randomUUID();
   const updated={...workbook,Meta:[...workbook.Meta.filter(row=>row.key!=='revision'),{key:'revision',value:nextRevision}]};
   // Overwrite only ranges that belong to the canonical schema. Clear stale rows first.
