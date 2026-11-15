@@ -39,6 +39,10 @@ if(name==='MetricAxes'){
  if(!window.confirm('Delete axis "'+(row.name||row.id)+'" and '+scores.length+' related scores?'))return;
  setData(old=>({...old,MetricAxes:old.MetricAxes.filter(x=>x.id!==row.id),Scores:old.Scores.filter(x=>x.axisId!==row.id)}));setDirty(true);return;
 }
+if(name==='Bookings'||name==='Skills'){
+ if(!window.confirm('Remove this record and its Booking Skills links?'))return;
+ setData(old=>({...old,[name]:old[name].filter(r=>r!==row),BookingSkills:old.BookingSkills.filter(link=>name==='Bookings'?link.bookingId!==row.id:link.skillId!==row.id)}));setDirty(true);return;
+}
 if(window.confirm('Remove this record? Check references before saving.'))setRows(name,data[name].filter(r=>r!==row))
 };
 const cleanupOrphanMetrics=()=>{
