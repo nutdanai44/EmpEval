@@ -32,6 +32,7 @@ export function validateWorkbook(workbook:Workbook):string[] {
   check('EmployeeComments','employeeId',employees);
   check('Projects','orgId',orgs);
   check('Bookings','employeeId',employees);check('Bookings','projectId',projects);
+  check('BookingSkills','bookingId',ids('Bookings'));check('BookingSkills','skillId',skills);
   check('Portfolio','employeeId',employees);check('Portfolio','projectId',projects);
   for(const name of sheetNames){
     const cols=[...sheetHeaders[name]];
@@ -53,6 +54,7 @@ export function validateWorkbook(workbook:Workbook):string[] {
   };
   unique('EmployeeMetrics',['employeeId','metricId','periodId']);
   unique('EmployeeSkills',['employeeId','skillId']);
+  unique('BookingSkills',['bookingId','skillId']);
   unique('Scores',['employeeId','axisId','periodId']);
   for(const axis of workbook.MetricAxes){
     if(!(Number(axis.max)>0))errors.push('MetricAxes: invalid max for '+axis.id);
