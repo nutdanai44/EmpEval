@@ -74,3 +74,10 @@ test('lists dates shared by all active employees and preserves part-day availabi
   ]);
   assert.deepEqual(allStaffLeaveDays([], rows, '2027', holidays), []);
 });
+
+test('sorts leave conflicts by date regardless of entry order', () => {
+  const rows = [leave('a', '2027-02-01'), leave('a', '2027-01-04')];
+  assert.deepEqual(leaveCoverageDays([employees[0]], rows, '2027', holidays).map(day => day.date), [
+    '2027-01-04', '2027-02-01'
+  ]);
+});

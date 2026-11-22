@@ -9,6 +9,12 @@ type Props = {
 };
 
 export function CompanyHolidays({ rows, onChange, t }: Props) {
+  const currentYear = String(new Date().getFullYear());
+  const [year, setYear] = useState(currentYear);
+  const years = [...new Set([currentYear, year, ...rows.filter(row => isDate(row.date)).map(row => row.date.slice(0, 4))])]
+    .sort((a, b) => b.localeCompare(a));
+  const holidays = rows.filter(row => row.date?.startsWith(year + '-'))
+    .sort((a, b) => a.date.localeCompare(b.date));
   const [draft, setDraft] = useState<Row | null>(null);
   const [error, setError] = useState('');
 
@@ -33,15 +39,23 @@ export function CompanyHolidays({ rows, onChange, t }: Props) {
     }
     const holiday = { id: draft.id || crypto.randomUUID(), date, name };
     onChange(draft.id ? rows.map(row => row.id === holiday.id ? holiday : row) : [...rows, holiday]);
+    setYear(date.slice(0, 4));
     edit(null);
   }
 
   return <section className="panel employee-leave" aria-label={t('Holiday calendar', 'ปฏิทินวันหยุด')}>
     <div className="row">
       <h2>{t('Company holiday calendar', 'ปฏิทินวันหยุดบริษัท')}</h2>
-      <button type="button" disabled={!!draft} onClick={() => edit({ id: '', date: '', name: '' })}>
-        {t('+ Add holiday', '+ เพิ่มวันหยุด')}
-      </button>
+      <div className="leave-actions">
+        <label>{t('Holiday year', 'ปีของวันหยุด')}{' '}
+          <select value={year} disabled={!!draft} onChange={event => setYear(event.target.value)}>
+            {years.map(value => <option key={value} value={value}>{value}</option>)}
+          </select>
+        </label>
+        <button type="button" disabled={!!draft} onClick={() => edit({ id: '', date: '', name: '' })}>
+          {t('+ Add holiday', '+ เพิ่มวันหยุด')}
+        </button>
+      </div>
     </div>
     {draft && <form className="leave-form" onSubmit={submit} key={draft.id || 'new'}>
       <div className="leave-fields">
@@ -58,9 +72,9 @@ export function CompanyHolidays({ rows, onChange, t }: Props) {
         <button type="button" onClick={() => edit(null)}>{t('Cancel', 'ยกเลิก')}</button>
       </div>
     </form>}
-    {rows.length ? <div className="scroll"><table>
+    {holidays.length ? <div className="scroll"><table>
       <thead><tr><th>{t('Date', 'วันที่')}</th><th>{t('Holiday name', 'ชื่อวันหยุด')}</th><th>{t('Actions', 'การดำเนินการ')}</th></tr></thead>
-      <tbody>{rows.slice().sort((a, b) => a.date.localeCompare(b.date)).map(row => <tr key={row.id}>
+      <tbody>{holidays.map(row => <tr key={row.id}>
         <td>{row.date}</td><td>{row.name}</td>
         <td><div className="leave-actions">
           <button type="button" disabled={!!draft} onClick={() => edit(row)}>{t('Edit', 'แก้ไข')}</button>
@@ -71,6 +85,6 @@ export function CompanyHolidays({ rows, onChange, t }: Props) {
           }}>{t('Delete', 'ลบ')}</button>
         </div></td>
       </tr>)}</tbody>
-    </table></div> : <p>{t('No company holidays yet.', 'ยังไม่มีวันหยุดบริษัท')}</p>}
+    </table></div> : <p>{t('No company holidays in this year.', 'ยังไม่มีวันหยุดบริษัทในปีนี้')}</p>}
   </section>;
 }
