@@ -19,7 +19,11 @@ export function employeeLeaveTotals(
   });
 }
 
-export function leaveCoverageDays(employees: Row[], rows: Row[], year: string, holidays: ReadonlySet<string>) {
+function isWorkday(day: Date, date: string, holidays: ReadonlySet<string>) {
+  return day.getUTCDay() !== 0 && day.getUTCDay() !== 6 && !holidays.has(date);
+}
+
+function getLeaveCoverage(employees: Row[], rows: Row[], year: string, holidays: ReadonlySet<string>) {
   const activeIds = new Set(employees.filter(employee => employee.active !== 'false').map(employee => employee.id));
   const first = year + '-01-01';
   const last = year + '-12-31';
@@ -30,7 +34,7 @@ export function leaveCoverageDays(employees: Row[], rows: Row[], year: string, h
     const end = row.endDate < last ? row.endDate : last;
     for (const day = new Date(start); day <= new Date(end); day.setUTCDate(day.getUTCDate() + 1)) {
       const date = day.toISOString().slice(0, 10);
-      if (day.getUTCDay() === 0 || day.getUTCDay() === 6 || holidays.has(date)) continue;
+      if (!isWorkday(day, date, holidays)) continue;
       const byEmployee = leaveByDate.get(date) ?? new Map<string, Row[]>();
       const entries = byEmployee.get(row.employeeId) ?? [];
       entries.push(row);
@@ -39,7 +43,7 @@ export function leaveCoverageDays(employees: Row[], rows: Row[], year: string, h
     }
   }
 
-  return Array.from(leaveByDate, ([date, byEmployee]) => {
+  const days = Array.from(leaveByDate, ([date, byEmployee]) => {
     const absences = Array.from(byEmployee, ([employeeId, entries]) => {
       const modes = new Set(entries.map(row => row.mode));
       const fullDay = modes.has('full') || (modes.has('morning') && modes.has('afternoon'));
@@ -54,5 +58,28 @@ export function leaveCoverageDays(employees: Row[], rows: Row[], year: string, h
       availableAllDay: activeIds.size - absences.length,
       partiallyAvailable: absences.length - fullDayCount
     };
-  }).filter(day => day.noCoverage || day.absences.length > 1);
+  });
+  return { days, activeCount: activeIds.size };
+}
+
+export function leaveCoverageDays(employees: Row[], rows: Row[], year: string, holidays: ReadonlySet<string>) {
+  return getLeaveCoverage(employees, rows, year, holidays).days
+    .filter(day => day.noCoverage || day.absences.length > 1);
+}
+
+export function monthlyStaffing(employees: Row[], rows: Row[], year: string, holidays: ReadonlySet<string>) {
+  const { days, activeCount } = getLeaveCoverage(employees, rows, year, holidays);
+  const availability = new Map(days.map(day => [day.date, day.availableAllDay]));
+  const months = Array.from({ length: 12 }, (_, month) => ({ month, minimum: null as number | null }));
+  if (!activeCount) return months;
+
+  const last = new Date(year + '-12-31');
+  for (const day = new Date(year + '-01-01'); day <= last; day.setUTCDate(day.getUTCDate() + 1)) {
+    const date = day.toISOString().slice(0, 10);
+    if (!isWorkday(day, date, holidays)) continue;
+    const entry = months[day.getUTCMonth()];
+    const available = availability.get(date) ?? activeCount;
+    entry.minimum = entry.minimum === null ? available : Math.min(entry.minimum, available);
+  }
+  return months;
 }
