@@ -121,6 +121,14 @@ try {
   if (await teamLeave.locator('dd').allTextContents().then(values => values.join(',')) !== '1 day,0 days,1 day') {
     throw Error('Unexpected team leave totals');
   }
+  const conflicts = teamLeave.getByRole('region', { name: 'Leave conflicts' });
+  await conflicts.getByRole('checkbox', { name: 'Only days with no coverage' }).check();
+  await conflicts.getByText('No one available all day', { exact: true }).waitFor();
+  const balances = teamLeave.getByRole('region', { name: 'Leave by employee' });
+  await balances.getByRole('row', { name: /New Employee.*0 days.*1 day/ }).waitFor();
+  await conflicts.getByRole('button', { name: 'New Employee', exact: true }).click();
+  await page.getByRole('tab', { name: 'Leave', exact: true, selected: true }).waitFor();
+
 
   await page.getByRole('button', { name: 'Projects', exact: true }).click();
   await page.getByRole('tab', { name: 'Organizations' }).click();
