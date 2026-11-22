@@ -26,8 +26,8 @@ test('save refuses invalid references before any remote mutation',async()=>{
   await assert.rejects(()=>saveWorkbook(api,w,''),/Invalid workbook/);
   assert.equal(calls,0);
 });
-test('loads older workbooks and creates a durable leave tab on save', async () => {
-  const sheets = new Map(sheetNames.filter(name => name !== 'EmployeeLeaves')
+test('loads older workbooks and creates durable leave and holiday tabs on save', async () => {
+  const sheets = new Map(sheetNames.filter(name => !['EmployeeLeaves', 'CompanyHolidays'].includes(name))
     .map(name => [name, [[...sheetHeaders[name]]]]));
   sheets.get('Employees').push(['employee-1']);
   const api = async (path, method = 'GET', body) => {
@@ -52,8 +52,11 @@ test('loads older workbooks and creates a durable leave tab on save', async () =
     startDate: '2026-02-01', endDate: '2026-02-01', startTime: '', endTime: '',
     dailyMinutes: '195', detail: 'Test entry'
   }];
+  assert.deepEqual(workbook.CompanyHolidays, []);
+  workbook.CompanyHolidays = [{ id: 'holiday-1', date: '2026-02-02', name: 'Test holiday' }];
   const savedRevision = await saveWorkbook(api, workbook, revision);
   const reloaded = await loadWorkbook(api);
   assert.deepEqual(reloaded.workbook.EmployeeLeaves, workbook.EmployeeLeaves);
+  assert.deepEqual(reloaded.workbook.CompanyHolidays, workbook.CompanyHolidays);
   assert.equal(reloaded.revision, savedRevision);
 });

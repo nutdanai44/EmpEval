@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react';
-import { leaveMinutesInRange, leaveModes, leaveTypes, summarizeLeave, validLeave } from '../../domain/employee-leave';
+import { leaveDayMinutes, leaveMinutesInRange, leaveModes, leaveTypes, summarizeLeave, validLeave } from '../../domain/employee-leave';
 import type { Row } from '../../domain/workbook-v1.2';
+import { LeaveSummaryChart } from './LeaveSummaryChart';
 import './employee-leave.css';
 
 type Translate = (en: string, th: string) => string;
 type Props = {
   employeeId: string;
   rows: Row[];
+  holidays: Row[];
   onChange: (rows: Row[]) => void;
   t: Translate;
 };
@@ -26,13 +28,18 @@ function localDate() {
     .map(value => String(value).padStart(2, '0')).join('-');
 }
 
-export function EmployeeLeave({ employeeId, rows, onChange, t }: Props) {
+export function EmployeeLeave({ employeeId, rows, holidays, onChange, t }: Props) {
   const [draft, setDraft] = useState<Row | null>(null);
   const [error, setError] = useState('');
   const [month, setMonth] = useState('');
   const today = localDate();
   const employeeRows = rows.filter(row => row.employeeId === employeeId);
-  const summary = summarizeLeave(employeeRows, today);
+  const holidayDates = new Set(holidays.map(row => row.date));
+  const summary = summarizeLeave(employeeRows, today, holidayDates);
+  const days = new Intl.NumberFormat(t('en-US', 'th-TH'), { maximumFractionDigits: 3 });
+  function formatDays(minutes: number) {
+    return days.format(minutes / leaveDayMinutes) + t(minutes === leaveDayMinutes ? ' day' : ' days', ' วัน');
+  }
   const types: Record<string, string> = {
     vacation: t('Vacation', 'พักร้อน'),
     personal: t('Personal leave', 'ลากิจ'),
@@ -85,7 +92,8 @@ export function EmployeeLeave({ employeeId, rows, onChange, t }: Props) {
     <div className="row">
       <div>
         <h3>{t('Leave used this year', 'ใช้วันลาปีนี้')} · {today.slice(0, 4)}</h3>
-        <strong className="leave-total">{formatDuration(summary.total, t)}</strong>
+        <strong className="leave-total">{formatDays(summary.total)}</strong>
+        <small className="leave-secondary">{formatDuration(summary.total, t)}</small>
       </div>
       <button type="button" disabled={!!draft} onClick={() => edit({
         employeeId, type: 'vacation', mode: 'full', startDate: today, endDate: '',
@@ -94,9 +102,10 @@ export function EmployeeLeave({ employeeId, rows, onChange, t }: Props) {
     </div>
     <dl className="leave-breakdown">
       {summary.byType.map(({ type, minutes }) => <div key={type}>
-        <dt>{types[type]}</dt><dd>{formatDuration(minutes, t)}</dd>
+        <dt>{types[type]}</dt><dd>{formatDays(minutes)}</dd>
       </div>)}
     </dl>
+    <LeaveSummaryChart months={summary.months} types={types} t={t}/>
     {draft && <form className="leave-form" onSubmit={submit} key={draft.id || 'new'}>
       <h3>{draft.id ? t('Edit leave', 'แก้ไขวันลา') : t('Add leave', 'เพิ่มวันลา')}</h3>
       <div className="leave-fields">
@@ -125,14 +134,14 @@ export function EmployeeLeave({ employeeId, rows, onChange, t }: Props) {
             <input type="date" min={draft.startDate} value={draft.endDate} onChange={event => setField('endDate', event.target.value)}/>
           </label>
           <label>{t('Hours per day', 'ชั่วโมงต่อวัน')}
-            <input type="number" name="hours" min="0" max="24" defaultValue={Math.floor(Number(draft.dailyMinutes) / 60)}/>
+            <input type="number" name="hours" min="0" max="24" key={draft.mode} defaultValue={draft.dailyMinutes ? Math.floor(Number(draft.dailyMinutes) / 60) : draft.mode === 'full' ? leaveDayMinutes / 60 : 0}/>
           </label>
           <label>{t('Minutes per day', 'นาทีต่อวัน')}
-            <input type="number" name="minutes" min="0" max="59" defaultValue={Number(draft.dailyMinutes) % 60}/>
+            <input type="number" name="minutes" min="0" max="59" key={draft.mode} defaultValue={Number(draft.dailyMinutes) % 60}/>
           </label>
         </>}
       </div>
-      {draft.mode !== 'hourly' && <small>{t('A date range counts every date in the range. Enter separate records if daily hours differ.', 'ช่วงวันที่ลานับทุกวันในช่วงนั้น หากชั่วโมงลาแต่ละวันต่างกัน ให้เพิ่มแยกเป็นรายวัน')}</small>}
+      <small>{t('Leave totals count weekdays, excluding company holidays.', 'ยอดวันลานับเฉพาะวันจันทร์–ศุกร์ที่ตรงกับวันทำงานของบริษัท')}</small>
       {draft.type === 'other' && <label>{t('Details (optional)', 'รายละเอียด (ถ้ามี)')}
         <input value={draft.detail} onChange={event => setField('detail', event.target.value)}/>
       </label>}
@@ -161,7 +170,7 @@ export function EmployeeLeave({ employeeId, rows, onChange, t }: Props) {
         <td>{types[row.type]} · {modes[row.mode]}
           {row.type === 'other' && row.detail && <small className="leave-secondary">{row.detail}</small>}
         </td>
-        <td>{formatDuration(leaveMinutesInRange(row, row.startDate, row.endDate), t)}
+        <td>{formatDuration(leaveMinutesInRange(row, row.startDate, row.endDate, holidayDates), t)}
           {row.mode === 'hourly' && <small className="leave-secondary">{row.startTime}–{row.endTime}</small>}
         </td>
         <td><div className="leave-actions">
