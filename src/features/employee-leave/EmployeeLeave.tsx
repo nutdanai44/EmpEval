@@ -1,9 +1,15 @@
 import { useState, type FormEvent } from 'react';
-import { leaveDayMinutes, leaveMinutesInRange, leaveModes, leaveTypes, leaveYears, summarizeLeave, validLeave } from '../../domain/employee-leave';
+import { leaveDayMinutes, leaveMinutesInRange, leaveTypes, leaveYears, summarizeLeave, validLeave } from '../../domain/employee-leave';
 import type { Row } from '../../domain/workbook-v1.2';
 import { LeaveSummaryChart } from './LeaveSummaryChart';
 import { formatLeaveDays, leaveTypeLabels, localDate, type LeaveTranslate } from './leave-display';
 import './employee-leave.css';
+
+const defaultDailyMinutes: Record<string, number> = {
+  full: leaveDayMinutes,
+  morning: 3 * 60,
+  afternoon: 5 * 60
+};
 
 type Props = {
   employeeId: string;
@@ -31,6 +37,10 @@ export function EmployeeLeave({ employeeId, rows, holidays, onChange, t }: Props
   const [year, setYear] = useState(today.slice(0, 4));
   const years = [...new Set([Number(today.slice(0, 4)), Number(year), ...leaveYears(employeeRows)])]
     .sort((a, b) => b - a);
+  const savedLeave = draft?.id ? employeeRows.find(row => row.id === draft.id) : undefined;
+  const dailyMinutes = draft && savedLeave && savedLeave.mode === draft.mode
+    ? Number(savedLeave.dailyMinutes)
+    : defaultDailyMinutes[draft?.mode ?? 'full'];
   const holidayDates = new Set(holidays.map(row => row.date));
   const summary = summarizeLeave(employeeRows, today, holidayDates, year);
   const formatDays = (minutes: number) => formatLeaveDays(minutes, t);
@@ -114,11 +124,14 @@ export function EmployeeLeave({ employeeId, rows, holidays, onChange, t }: Props
             {leaveTypes.map(type => <option key={type} value={type}>{types[type]}</option>)}
           </select>
         </label>
-        <label>{t('Duration type', 'ช่วงที่ลา')}
+        {draft.mode === 'hourly' ? <div>
+          <span>{t('Duration type', 'ช่วงที่ลา')}</span>
+          <strong className="leave-secondary">{modes.hourly}</strong>
+        </div> : <label>{t('Duration type', 'ช่วงที่ลา')}
           <select value={draft.mode} onChange={event => setField('mode', event.target.value)}>
-            {leaveModes.map(mode => <option key={mode} value={mode}>{modes[mode]}</option>)}
+            {Object.keys(defaultDailyMinutes).map(mode => <option key={mode} value={mode}>{modes[mode]}</option>)}
           </select>
-        </label>
+        </label>}
         <label>{draft.mode === 'hourly' ? t('Date', 'วันที่ลา') : t('First date', 'วันแรกที่ลา')}
           <input type="date" value={draft.startDate} required onChange={event => setField('startDate', event.target.value)}/>
         </label>
@@ -134,10 +147,10 @@ export function EmployeeLeave({ employeeId, rows, holidays, onChange, t }: Props
             <input type="date" min={draft.startDate} value={draft.endDate} onChange={event => setField('endDate', event.target.value)}/>
           </label>
           <label>{t('Hours per day', 'ชั่วโมงต่อวัน')}
-            <input type="number" name="hours" min="0" max="24" key={draft.mode} defaultValue={draft.dailyMinutes ? Math.floor(Number(draft.dailyMinutes) / 60) : draft.mode === 'full' ? leaveDayMinutes / 60 : 0}/>
+            <input type="number" name="hours" min="0" max="24" key={draft.mode} defaultValue={Math.floor(dailyMinutes / 60)}/>
           </label>
           <label>{t('Minutes per day', 'นาทีต่อวัน')}
-            <input type="number" name="minutes" min="0" max="59" key={draft.mode} defaultValue={Number(draft.dailyMinutes) % 60}/>
+            <input type="number" name="minutes" min="0" max="59" key={draft.mode} defaultValue={dailyMinutes % 60}/>
           </label>
         </>}
       </div>
