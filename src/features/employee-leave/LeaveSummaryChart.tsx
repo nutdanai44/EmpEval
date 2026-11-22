@@ -16,12 +16,13 @@ export function LeaveSummaryChart({ months, types, t }: Props) {
   const unit = t('days', 'วัน');
   const data = months.map(({ month, byType }) => ({
     month: monthFormat.format(new Date(month)),
+    used: byType.reduce((total, entry) => total + entry.used, 0) / leaveDayMinutes,
     ...Object.fromEntries(byType.map(({ type, minutes }) => [type, minutes / leaveDayMinutes]))
   }));
 
   return <section className="leave-monthly-summary" aria-label={t('Monthly leave summary', 'สรุปวันลารายเดือน')}>
     <h3>{t('Monthly leave by type', 'วันลารายเดือนแยกตามประเภท')}</h3>
-    <small>{t('8 hours = 1 day', '8 ชั่วโมง = 1 วัน')}</small>
+    <small>{t('8 hours = 1 day', '8 ชั่วโมง = 1 วัน')} · {t('Includes upcoming leave', 'รวมวันลาล่วงหน้า')}</small>
     <div className="scroll">
       <div className="leave-chart">
         <ResponsiveContainer width="100%" height={250}>
@@ -32,7 +33,9 @@ export function LeaveSummaryChart({ months, types, t }: Props) {
             <Tooltip formatter={value => days(Number(value)) + ' ' + unit}
               labelFormatter={(label, payload) => {
                 const total = payload.reduce((sum, item) => sum + Number(item.value || 0), 0);
-                return label + ' · ' + t('Total', 'รวม') + ' ' + days(total) + ' ' + unit;
+                const upcoming = Math.max(0, total - Number(payload[0]?.payload?.used || 0));
+                return label + ' · ' + t('Total', 'รวม') + ' ' + days(total) + ' ' + unit +
+                  ' · ' + t('Upcoming', 'ลาล่วงหน้า') + ' ' + days(upcoming) + ' ' + unit;
               }}/>
             <Legend wrapperStyle={{ fontSize: 12 }}/>
             {leaveTypes.map((type, index) => <Bar key={type} dataKey={type} name={types[type]}

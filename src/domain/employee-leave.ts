@@ -59,27 +59,48 @@ export function leaveMinutesInRange(
   return workdaysInRange(start, end, holidays) * leaveMinutesPerDay(row);
 }
 
+export function leaveYears(rows: Record<string, string>[]) {
+  const years = new Set<number>();
+  for (const row of rows) {
+    if (!validLeave(row)) continue;
+    const first = Number(row.startDate.slice(0, 4));
+    const last = Number(row.endDate.slice(0, 4));
+    for (let year = first; year <= last; year++) years.add(year);
+  }
+  return [...years];
+}
+
 export function summarizeLeave(
-  rows: Record<string, string>[], today: string, holidays: ReadonlySet<string> = new Set()
+  rows: Record<string, string>[], today: string, holidays: ReadonlySet<string> = new Set(),
+  year = today.slice(0, 4)
 ) {
-  const year = today.slice(0, 4);
   const months = Array.from({ length: 12 }, (_, index) => {
     const month = String(index + 1).padStart(2, '0');
     const start = year + '-' + month + '-01';
     const nextMonth = new Date(start);
     nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1, 0);
     const monthEnd = nextMonth.toISOString().slice(0, 10);
-    const cutoff = monthEnd < today ? monthEnd : today;
-    const byType = leaveTypes.map(type => ({
-      type,
-      minutes: rows.filter(row => row.type === type)
-        .reduce((total, row) => total + leaveMinutesInRange(row, start, cutoff, holidays), 0)
-    }));
+    const byType = leaveTypes.map(type => {
+      let minutes = 0;
+      let used = 0;
+      for (const row of rows) {
+        if (row.type !== type) continue;
+        minutes += leaveMinutesInRange(row, start, monthEnd, holidays);
+        used += leaveMinutesInRange(row, start, monthEnd < today ? monthEnd : today, holidays);
+      }
+      return { type, minutes, used };
+    });
     return { month: start, byType };
   });
-  const byType = leaveTypes.map((type, index) => ({
-    type,
-    minutes: months.reduce((total, month) => total + month.byType[index].minutes, 0)
-  }));
-  return { months, byType, total: byType.reduce((total, entry) => total + entry.minutes, 0) };
+  const byType = leaveTypes.map((type, index) => {
+    const minutes = months.reduce((total, month) => total + month.byType[index].used, 0);
+    const allMinutes = months.reduce((total, month) => total + month.byType[index].minutes, 0);
+    return { type, minutes, planned: allMinutes - minutes };
+  });
+  return {
+    months,
+    byType,
+    total: byType.reduce((total, entry) => total + entry.minutes, 0),
+    plannedTotal: byType.reduce((total, entry) => total + entry.planned, 0)
+  };
 }
