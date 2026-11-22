@@ -118,10 +118,10 @@ try {
   await leave.getByText('Upcoming leave · 1 day', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
   await page.getByRole('combobox', { name: 'Dashboard year' }).selectOption('2027');
-  const staffing = page.getByRole('region', { name: 'Staff available by month · 2027' });
-  const jan = staffing.locator('dl > div').filter({ has: page.getByText('Jan', { exact: true }) });
-  if (await jan.locator('dd').textContent() !== '0') throw Error('Incorrect January minimum staffing');
-  if (!(await jan.getAttribute('class'))?.includes('monthly-staffing-low')) throw Error('Low staffing was not highlighted');
+  const staffing = page.getByRole('region', { name: 'Dates everyone is on leave · 2027' });
+  const sharedDate = staffing.getByRole('row').filter({ has: page.locator('time[datetime="2027-01-04"]') });
+  await sharedDate.getByText('No one available all day', { exact: true }).waitFor();
+  if (!(await sharedDate.getAttribute('class'))?.includes('shared-leave-low')) throw Error('Low staffing was not highlighted');
   const teamLeave = page.getByRole('region', { name: 'Team leave summary' });
   if (await teamLeave.count()) throw Error('Leave details are still shown on the dashboard overview');
   await page.getByRole('tab', { name: 'Team leave', exact: true }).click();

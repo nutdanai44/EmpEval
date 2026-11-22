@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { employeeLeaveTotals, leaveCoverageDays, monthlyStaffing } from '../src/domain/leave-coverage.ts';
+import { allStaffLeaveDays, employeeLeaveTotals, leaveCoverageDays } from '../src/domain/leave-coverage.ts';
 
 const employees = [{ id: 'a' }, { id: 'b', active: 'true' }, { id: 'former', active: 'false' }];
 const holidays = new Set(['2027-01-05']);
@@ -55,22 +55,22 @@ test('calculates annual past and upcoming balances separately for each employee'
   ]);
 });
 
-test('monthly staffing reports the lowest full-day headcount even for one absence', () => {
-  const staff = [...employees, { id: 'c', active: 'true' }];
+test('lists dates shared by all active employees and preserves part-day availability', () => {
   const rows = [
+    leave('a', '2027-01-01'),
     leave('a', '2027-01-04', '2027-01-04', { mode: 'morning', dailyMinutes: '180' }),
-    leave('b', '2027-01-05'),
-    leave('c', '2027-01-05'),
-    leave('b', '2027-02-06'),
-    leave('former', '2027-02-08')
+    leave('b', '2027-01-04'),
+    leave('a', '2027-01-05', '2027-01-11'),
+    leave('b', '2027-01-05', '2027-01-11'),
+    leave('former', '2027-01-01')
   ];
-  const results = monthlyStaffing(staff, rows, '2027', holidays);
-  assert.equal(results.length, 12);
-  assert.deepEqual(results.slice(0, 3).map(entry => entry.minimum), [2, 3, 3]);
-  assert.equal(monthlyStaffing([], rows, '2027', holidays)[0].minimum, null);
-});
-
-test('monthly staffing includes zero when all active people are on leave', () => {
-  const rows = [leave('a', '2027-01-04'), leave('b', '2027-01-04')];
-  assert.equal(monthlyStaffing(employees, rows, '2027', holidays)[0].minimum, 0);
+  const days = allStaffLeaveDays(employees, rows, '2027', holidays);
+  assert.deepEqual(days, [
+    { date: '2027-01-04', remaining: 1 },
+    { date: '2027-01-06', remaining: 0 },
+    { date: '2027-01-07', remaining: 0 },
+    { date: '2027-01-08', remaining: 0 },
+    { date: '2027-01-11', remaining: 0 }
+  ]);
+  assert.deepEqual(allStaffLeaveDays([], rows, '2027', holidays), []);
 });

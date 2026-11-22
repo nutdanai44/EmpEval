@@ -67,19 +67,9 @@ export function leaveCoverageDays(employees: Row[], rows: Row[], year: string, h
     .filter(day => day.noCoverage || day.absences.length > 1);
 }
 
-export function monthlyStaffing(employees: Row[], rows: Row[], year: string, holidays: ReadonlySet<string>) {
+export function allStaffLeaveDays(employees: Row[], rows: Row[], year: string, holidays: ReadonlySet<string>) {
   const { days, activeCount } = getLeaveCoverage(employees, rows, year, holidays);
-  const availability = new Map(days.map(day => [day.date, day.availableAllDay]));
-  const months = Array.from({ length: 12 }, (_, month) => ({ month, minimum: null as number | null }));
-  if (!activeCount) return months;
-
-  const last = new Date(year + '-12-31');
-  for (const day = new Date(year + '-01-01'); day <= last; day.setUTCDate(day.getUTCDate() + 1)) {
-    const date = day.toISOString().slice(0, 10);
-    if (!isWorkday(day, date, holidays)) continue;
-    const entry = months[day.getUTCMonth()];
-    const available = availability.get(date) ?? activeCount;
-    entry.minimum = entry.minimum === null ? available : Math.min(entry.minimum, available);
-  }
-  return months;
+  return days.filter(day => day.absences.length === activeCount)
+    .map(day => ({ date: day.date, remaining: day.partiallyAvailable }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }

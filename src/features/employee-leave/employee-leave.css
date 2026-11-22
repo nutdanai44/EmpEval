@@ -86,27 +86,7 @@
   color: #b42318;
 }
 
-.monthly-staffing {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-  gap: 8px;
-}
-
-.monthly-staffing > div {
-  padding: 8px 6px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.monthly-staffing dd {
-  margin: 4px 0 0;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.monthly-staffing .monthly-staffing-low {
+.shared-leave-low td:last-child {
   background: #fef3c7;
-  border-color: #eab308;
   color: #713f12;
 }
