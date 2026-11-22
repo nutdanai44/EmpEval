@@ -109,6 +109,19 @@ try {
   page.once('dialog', dialog => dialog.accept());
   await leave.getByRole('button', { name: 'Delete', exact: true }).click();
   if (await total.textContent() !== '0 days') throw Error('Deleted leave still contributes to the total');
+  await leave.getByRole('button', { name: '+ Add leave' }).click();
+  await leave.getByLabel('First date').fill('2027-01-04');
+  await leave.getByRole('button', { name: 'Done' }).click();
+  if (await leave.getByLabel('Leave year').inputValue() !== '2027') throw Error('Future leave year was not selected');
+  await leave.getByText('Upcoming leave · 1 day', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Dashboard year' }).selectOption('2027');
+  const teamLeave = page.getByRole('region', { name: 'Team leave summary' });
+  await teamLeave.getByRole('heading', { name: 'Team leave summary · 2027' }).waitFor();
+  if (await teamLeave.locator('dd').allTextContents().then(values => values.join(',')) !== '1 day,0 days,1 day') {
+    throw Error('Unexpected team leave totals');
+  }
+
   await page.getByRole('button', { name: 'Projects', exact: true }).click();
   await page.getByRole('tab', { name: 'Organizations' }).click();
   await page.getByRole('heading', { name: 'Organizations', level: 2 }).waitFor();

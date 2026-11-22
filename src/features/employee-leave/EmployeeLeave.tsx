@@ -1,19 +1,19 @@
 import { useState, type FormEvent } from 'react';
-import { leaveDayMinutes, leaveMinutesInRange, leaveModes, leaveTypes, summarizeLeave, validLeave } from '../../domain/employee-leave';
+import { leaveDayMinutes, leaveMinutesInRange, leaveModes, leaveTypes, leaveYears, summarizeLeave, validLeave } from '../../domain/employee-leave';
 import type { Row } from '../../domain/workbook-v1.2';
 import { LeaveSummaryChart } from './LeaveSummaryChart';
+import { formatLeaveDays, leaveTypeLabels, localDate, type LeaveTranslate } from './leave-display';
 import './employee-leave.css';
 
-type Translate = (en: string, th: string) => string;
 type Props = {
   employeeId: string;
   rows: Row[];
   holidays: Row[];
   onChange: (rows: Row[]) => void;
-  t: Translate;
+  t: LeaveTranslate;
 };
 
-function formatDuration(minutes: number, t: Translate) {
+function formatDuration(minutes: number, t: LeaveTranslate) {
   const hours = Math.floor(minutes / 60);
   const remaining = minutes % 60;
   const parts = [];
@@ -22,30 +22,19 @@ function formatDuration(minutes: number, t: Translate) {
   return parts.join(' ');
 }
 
-function localDate() {
-  const today = new Date();
-  return [today.getFullYear(), today.getMonth() + 1, today.getDate()]
-    .map(value => String(value).padStart(2, '0')).join('-');
-}
-
 export function EmployeeLeave({ employeeId, rows, holidays, onChange, t }: Props) {
   const [draft, setDraft] = useState<Row | null>(null);
   const [error, setError] = useState('');
   const [month, setMonth] = useState('');
   const today = localDate();
   const employeeRows = rows.filter(row => row.employeeId === employeeId);
+  const [year, setYear] = useState(today.slice(0, 4));
+  const years = [...new Set([Number(today.slice(0, 4)), Number(year), ...leaveYears(employeeRows)])]
+    .sort((a, b) => b - a);
   const holidayDates = new Set(holidays.map(row => row.date));
-  const summary = summarizeLeave(employeeRows, today, holidayDates);
-  const days = new Intl.NumberFormat(t('en-US', 'th-TH'), { maximumFractionDigits: 3 });
-  function formatDays(minutes: number) {
-    return days.format(minutes / leaveDayMinutes) + t(minutes === leaveDayMinutes ? ' day' : ' days', ' วัน');
-  }
-  const types: Record<string, string> = {
-    vacation: t('Vacation', 'พักร้อน'),
-    personal: t('Personal leave', 'ลากิจ'),
-    sick: t('Sick leave', 'ลาป่วย'),
-    other: t('Other leave', 'ลาอื่น ๆ')
-  };
+  const summary = summarizeLeave(employeeRows, today, holidayDates, year);
+  const formatDays = (minutes: number) => formatLeaveDays(minutes, t);
+  const types = leaveTypeLabels(t);
   const modes: Record<string, string> = {
     full: t('Full day', 'เต็มวัน'),
     morning: t('Morning', 'ครึ่งวันเช้า'),
@@ -71,7 +60,7 @@ export function EmployeeLeave({ employeeId, rows, holidays, onChange, t }: Props
     if (!draft) return;
     const values = new FormData(event.currentTarget);
     const hourly = draft.mode === 'hourly';
-    const row = {
+    const row: Row = {
       ...draft,
       id: draft.id || crypto.randomUUID(),
       endDate: hourly ? draft.startDate : draft.endDate || draft.startDate,
@@ -85,24 +74,35 @@ export function EmployeeLeave({ employeeId, rows, holidays, onChange, t }: Props
       return;
     }
     onChange(draft.id ? rows.map(item => item.id === row.id ? row : item) : [...rows, row]);
+    if (row.startDate.slice(0, 4) > year || row.endDate.slice(0, 4) < year) {
+      setYear(row.startDate.slice(0, 4));
+    }
     edit(null);
   }
 
   return <section className="panel employee-leave" aria-label={t('Employee leave', 'วันลาพนักงาน')}>
     <div className="row">
       <div>
-        <h3>{t('Leave used this year', 'ใช้วันลาปีนี้')} · {today.slice(0, 4)}</h3>
+        <h3>{t('Leave used', 'ลาแล้ว')} · {year}</h3>
         <strong className="leave-total">{formatDays(summary.total)}</strong>
         <small className="leave-secondary">{formatDuration(summary.total, t)}</small>
+        <small className="leave-secondary">{t('Upcoming leave', 'ลาล่วงหน้า')} · {formatDays(summary.plannedTotal)}</small>
       </div>
-      <button type="button" disabled={!!draft} onClick={() => edit({
-        employeeId, type: 'vacation', mode: 'full', startDate: today, endDate: '',
-        startTime: '', endTime: '', dailyMinutes: '', detail: ''
-      })}>{t('+ Add leave', '+ เพิ่มวันลา')}</button>
+      <div className="leave-actions">
+        <label>{t('Leave year', 'ปีของวันลา')}{' '}
+          <select value={year} onChange={event => setYear(event.target.value)}>
+            {years.map(value => <option key={value} value={String(value).padStart(4, '0')}>{value}</option>)}
+          </select>
+        </label>
+        <button type="button" disabled={!!draft} onClick={() => edit({
+          employeeId, type: 'vacation', mode: 'full', startDate: today, endDate: '',
+          startTime: '', endTime: '', dailyMinutes: '', detail: ''
+        })}>{t('+ Add leave', '+ เพิ่มวันลา')}</button>
+      </div>
     </div>
     <dl className="leave-breakdown">
-      {summary.byType.map(({ type, minutes }) => <div key={type}>
-        <dt>{types[type]}</dt><dd>{formatDays(minutes)}</dd>
+      {summary.byType.map(({ type, minutes, planned }) => <div key={type}>
+        <dt>{types[type]}</dt><dd>{formatDays(minutes + planned)}</dd>
       </div>)}
     </dl>
     <LeaveSummaryChart months={summary.months} types={types} t={t}/>

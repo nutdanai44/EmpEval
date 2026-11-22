@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { leaveMinutesInRange, summarizeLeave, validLeave } from '../src/domain/employee-leave.ts';
+import { leaveMinutesInRange, leaveYears, summarizeLeave, validLeave } from '../src/domain/employee-leave.ts';
 import { emptyWorkbook } from '../src/domain/schema-v1.2.ts';
 import { validateWorkbook } from '../src/domain/workbook-v1.2.ts';
 
@@ -56,8 +56,9 @@ test('allocates leave to the month it falls in and retains the leave type', () =
   const summary = summarizeLeave([range, sick], '2026-02-02');
   assert.equal(summary.months.length, 12);
   assert.deepEqual(summary.months[0].byType.map(item => item.minutes), [0, 0, 0, 480]);
-  assert.deepEqual(summary.months[1].byType.map(item => item.minutes), [0, 0, 120, 480]);
+  assert.deepEqual(summary.months[1].byType.map(item => item.minutes), [0, 0, 120, 960]);
   assert.equal(summary.total, 1080);
+  assert.equal(summary.plannedTotal, 480);
   assert.equal(summarizeLeave([range, sick], '2026-02-02', new Set(['2026-02-02'])).total, 480);
 });
 
@@ -69,4 +70,20 @@ test('validates calendar dates and refuses duplicate company holidays', () => {
   workbook.CompanyHolidays.push({ id: 'holiday-3', date: '2026-02-30', name: 'Invalid holiday' });
   assert.match(validateWorkbook(workbook).join(' '), /CompanyHolidays: duplicate key/);
   assert.match(validateWorkbook(workbook).join(' '), /CompanyHolidays row 4: invalid holiday/);
+});
+
+test('includes upcoming leave across employees and supports selecting next year', () => {
+  const first = { ...leave, startDate: '2026-12-31', endDate: '2027-01-05', dailyMinutes: '480' };
+  const second = { ...first, id: 'leave-2', employeeId: 'employee-2', type: 'vacation',
+    startDate: '2027-01-04', endDate: '2027-01-04' };
+  const holidays = new Set(['2027-01-01', '2027-01-05']);
+  assert.deepEqual(leaveYears([first, second]), [2026, 2027]);
+  const current = summarizeLeave([first, second], '2026-12-30', holidays);
+  assert.equal(current.total, 0);
+  assert.equal(current.plannedTotal, 480);
+  assert.equal(current.months[11].byType.find(entry => entry.type === 'other').minutes, 480);
+  const next = summarizeLeave([first, second], '2026-12-30', holidays, '2027');
+  assert.equal(next.total, 0);
+  assert.equal(next.plannedTotal, 960);
+  assert.deepEqual(next.months[0].byType.map(entry => entry.minutes), [480, 0, 0, 480]);
 });
