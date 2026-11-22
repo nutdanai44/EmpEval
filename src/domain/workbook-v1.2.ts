@@ -1,4 +1,4 @@
-import {validLeave} from './employee-leave.ts';
+import {isDate,validLeave} from './employee-leave.ts';
 import {sheetHeaders, sheetNames, type SheetName} from './schema-v1.2.ts';
 export type Row = Record<string,string>;
 export type Workbook = Record<SheetName,Row[]>;
@@ -57,6 +57,10 @@ export function validateWorkbook(workbook:Workbook):string[] {
       seen.add(key);
     }
   };
+  unique('CompanyHolidays',['date']);
+  for(const [index,row] of workbook.CompanyHolidays.entries()){
+    if(!isDate(row.date)||!row.name?.trim())errors.push('CompanyHolidays row '+(index+2)+': invalid holiday');
+  }
   unique('EmployeeMetrics',['employeeId','metricId','periodId']);
   unique('EmployeeSkills',['employeeId','skillId']);
   unique('BookingSkills',['bookingId','skillId']);

@@ -2,7 +2,7 @@ import {sheetHeaders,sheetNames,emptyWorkbook,type SheetName} from './schema-v1.
 import {decodeSheet,encodeWorkbook,validateWorkbook,type Workbook} from './workbook-v1.2.ts';
 
 export type SheetsTransport = (path:string,method?:string,body?:unknown)=>Promise<any>;
-const optionalSheets: SheetName[] = ['BookingSkills', 'EmployeeLeaves'];
+const optionalSheets: SheetName[] = ['BookingSkills', 'EmployeeLeaves', 'CompanyHolidays'];
 const range=(s:string)=>'/values/'+encodeURIComponent(s);
 
 /** Fetches all canonical v1.2 sheets; refuses partial or legacy workbooks. */

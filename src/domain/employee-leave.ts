@@ -1,9 +1,10 @@
 export const leaveTypes = ['vacation', 'personal', 'sick', 'other'] as const;
 export const leaveModes = ['full', 'morning', 'afternoon', 'hourly'] as const;
 
+export const leaveDayMinutes = 8 * 60;
 const dayMilliseconds = 86_400_000;
 
-function isDate(value: string) {
+export function isDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(value);
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
@@ -30,20 +31,55 @@ export function validLeave(row: Record<string, string>) {
     Number.isInteger(minutes) && minutes > 0 && minutes <= 1440;
 }
 
-export function leaveMinutesInRange(row: Record<string, string>, first: string, last: string) {
+function isWeekday(weekday: number) {
+  return weekday > 0 && weekday < 6;
+}
+
+function workdaysInRange(start: string, end: string, holidays: ReadonlySet<string>) {
+  const firstDate = new Date(start);
+  const days = (Date.parse(end) - firstDate.getTime()) / dayMilliseconds + 1;
+  const firstWeekday = firstDate.getUTCDay();
+  let workdays = Math.floor(days / 7) * 5;
+  for (let offset = 0; offset < days % 7; offset++) {
+    if (isWeekday((firstWeekday + offset) % 7)) workdays++;
+  }
+  for (const date of holidays) {
+    if (date >= start && date <= end && isWeekday(new Date(date).getUTCDay())) workdays--;
+  }
+  return workdays;
+}
+
+export function leaveMinutesInRange(
+  row: Record<string, string>, first: string, last: string, holidays: ReadonlySet<string> = new Set()
+) {
   if (!validLeave(row)) return 0;
   const start = row.startDate > first ? row.startDate : first;
   const end = row.endDate < last ? row.endDate : last;
   if (start > end) return 0;
-  return (((Date.parse(end) - Date.parse(start)) / dayMilliseconds) + 1) * leaveMinutesPerDay(row);
+  return workdaysInRange(start, end, holidays) * leaveMinutesPerDay(row);
 }
 
-export function summarizeLeave(rows: Record<string, string>[], today: string) {
-  const start = today.slice(0, 4) + '-01-01';
-  const byType = leaveTypes.map(type => ({
+export function summarizeLeave(
+  rows: Record<string, string>[], today: string, holidays: ReadonlySet<string> = new Set()
+) {
+  const year = today.slice(0, 4);
+  const months = Array.from({ length: 12 }, (_, index) => {
+    const month = String(index + 1).padStart(2, '0');
+    const start = year + '-' + month + '-01';
+    const nextMonth = new Date(start);
+    nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1, 0);
+    const monthEnd = nextMonth.toISOString().slice(0, 10);
+    const cutoff = monthEnd < today ? monthEnd : today;
+    const byType = leaveTypes.map(type => ({
+      type,
+      minutes: rows.filter(row => row.type === type)
+        .reduce((total, row) => total + leaveMinutesInRange(row, start, cutoff, holidays), 0)
+    }));
+    return { month: start, byType };
+  });
+  const byType = leaveTypes.map((type, index) => ({
     type,
-    minutes: rows.filter(row => row.type === type)
-      .reduce((total, row) => total + leaveMinutesInRange(row, start, today), 0)
+    minutes: months.reduce((total, month) => total + month.byType[index].minutes, 0)
   }));
-  return { byType, total: byType.reduce((total, entry) => total + entry.minutes, 0) };
+  return { months, byType, total: byType.reduce((total, entry) => total + entry.minutes, 0) };
 }
