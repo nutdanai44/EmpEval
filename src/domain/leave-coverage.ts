@@ -64,7 +64,8 @@ function getLeaveCoverage(employees: Row[], rows: Row[], year: string, holidays:
 
 export function leaveCoverageDays(employees: Row[], rows: Row[], year: string, holidays: ReadonlySet<string>) {
   return getLeaveCoverage(employees, rows, year, holidays).days
-    .filter(day => day.noCoverage || day.absences.length > 1);
+    .filter(day => day.noCoverage || day.absences.length > 1)
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export function allStaffLeaveDays(employees: Row[], rows: Row[], year: string, holidays: ReadonlySet<string>) {

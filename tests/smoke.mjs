@@ -79,6 +79,19 @@ try {
   await holidays.getByLabel('Holiday name').fill('Test company holiday');
   await holidays.getByRole('button', { name: 'Done' }).click();
   await holidays.getByText('Test company holiday', { exact: true }).waitFor();
+  const holidayYear = holidays.getByLabel('Holiday year');
+  if (await holidayYear.inputValue() !== '2026') throw Error('Holiday calendar did not start in the current year');
+  await holidays.getByRole('button', { name: '+ Add holiday' }).click();
+  await holidays.getByLabel('Holiday date').fill('2027-02-04');
+  await holidays.getByLabel('Holiday name').fill('Next year holiday');
+  await holidays.getByRole('button', { name: 'Done' }).click();
+  if (await holidayYear.inputValue() !== '2027') throw Error('Holiday calendar did not switch to the saved year');
+  await holidays.getByText('Next year holiday', { exact: true }).waitFor();
+  await holidays.getByText('Test company holiday', { exact: true }).waitFor({ state: 'detached' });
+  await holidayYear.selectOption('2026');
+  await holidays.getByText('Test company holiday', { exact: true }).waitFor();
+  await holidays.getByText('Next year holiday', { exact: true }).waitFor({ state: 'detached' });
+
   await page.getByRole('button', { name: 'Employees', exact: true }).click();
   await page.getByRole('tab', { name: 'Leave', exact: true }).click();
   const leave = page.getByRole('region', { name: 'Employee leave' });
@@ -116,6 +129,11 @@ try {
   await leave.getByRole('button', { name: 'Done' }).click();
   if (await leave.getByLabel('Leave year').inputValue() !== '2027') throw Error('Future leave year was not selected');
   await leave.getByText('Upcoming leave · 1 day', { exact: true }).waitFor();
+  await leave.getByRole('button', { name: '+ Add leave' }).click();
+  await leave.getByLabel('First date').fill('2027-01-01');
+  await leave.getByRole('button', { name: 'Done' }).click();
+  await page.clock.setFixedTime(new Date('2027-01-02T12:00:00Z'));
+
   await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
   await page.getByRole('combobox', { name: 'Dashboard year' }).selectOption('2027');
   const staffing = page.getByRole('region', { name: 'Dates everyone is on leave · 2027' });
@@ -131,15 +149,18 @@ try {
   await staffing.waitFor({ state: 'detached' });
 
   await teamLeave.getByRole('heading', { name: 'Team leave summary · 2027' }).waitFor();
-  if (await teamLeave.locator('dd').allTextContents().then(values => values.join(',')) !== '1 day,0 days,1 day') {
+  if (await teamLeave.locator('dd').allTextContents().then(values => values.join(',')) !== '2 days,1 day,1 day') {
     throw Error('Unexpected team leave totals');
   }
   const conflicts = teamLeave.getByRole('region', { name: 'Leave conflicts' });
   await conflicts.getByRole('checkbox', { name: 'Only days with no coverage' }).check();
-  await conflicts.getByText('No one available all day', { exact: true }).waitFor();
+  await conflicts.getByText('No one available all day', { exact: true }).first().waitFor();
   const balances = teamLeave.getByRole('region', { name: 'Leave by employee' });
-  await balances.getByRole('row', { name: /New Employee.*0 days.*1 day/ }).waitFor();
-  await conflicts.getByRole('button', { name: 'New Employee', exact: true }).click();
+  await balances.getByRole('row', { name: /New Employee.*1 day.*1 day.*2 days/ }).waitFor();
+  const conflictDates = await conflicts.locator('time').evaluateAll(items => items.map(item => item.dateTime));
+  if (conflictDates.join(',') !== '2027-01-01,2027-01-04') throw Error('Conflicts are not ordered by date');
+  await conflicts.getByRole('row').filter({ has: page.locator('time[datetime="2027-01-04"]') })
+    .getByRole('button', { name: 'New Employee', exact: true }).click();
   await page.getByRole('tab', { name: 'Leave', exact: true, selected: true }).waitFor();
 
 

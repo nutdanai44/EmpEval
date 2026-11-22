@@ -19,16 +19,10 @@ export function LeaveCoverage({ employees, rows, holidays, year, today, onOpenEm
   const people = new Map(employees.map(employee => [employee.id, employee.name || employee.employeeCode || employee.id]));
   const months = new Intl.DateTimeFormat(t('en-US', 'th-TH'), { month: 'long', timeZone: 'UTC' });
   const dates = new Intl.DateTimeFormat(t('en-US', 'th-TH'), {
-    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC'
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'
   });
   const days = leaveCoverageDays(employees, rows, year, holidays)
-    .filter(day => (month === 'all' || day.date.slice(5, 7) === month) && (!onlyUnstaffed || day.noCoverage))
-    .sort((a, b) => {
-      const pastA = a.date < today;
-      const pastB = b.date < today;
-      if (pastA !== pastB) return Number(pastA) - Number(pastB);
-      return pastA ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date);
-    });
+    .filter(day => (month === 'all' || day.date.slice(5, 7) === month) && (!onlyUnstaffed || day.noCoverage));
 
   const periods: Record<string, string> = {
     morning: t('Morning', 'ช่วงเช้า'),
