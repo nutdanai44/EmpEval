@@ -124,7 +124,10 @@ try {
   if (!(await sharedDate.getAttribute('class'))?.includes('shared-leave-low')) throw Error('Low staffing was not highlighted');
   const teamLeave = page.getByRole('region', { name: 'Team leave summary' });
   if (await teamLeave.count()) throw Error('Leave details are still shown on the dashboard overview');
-  await page.getByRole('tab', { name: 'Team leave', exact: true }).click();
+  await page.getByRole('button', { name: 'Employees', exact: true }).click();
+  await page.getByRole('button', { name: 'Team overview', exact: true }).click();
+  await page.getByRole('tablist', { name: 'Employee overview tabs' }).getByRole('tab', { name: 'Leave', exact: true }).click();
+  if (await page.getByRole('combobox', { name: 'Team leave year' }).inputValue() !== '2027') throw Error('Leave year was not preserved');
   await staffing.waitFor({ state: 'detached' });
 
   await teamLeave.getByRole('heading', { name: 'Team leave summary · 2027' }).waitFor();
