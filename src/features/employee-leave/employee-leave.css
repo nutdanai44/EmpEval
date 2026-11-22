@@ -63,3 +63,25 @@
   min-width: 560px;
   margin-top: 8px;
 }
+
+.leave-planning {
+  margin-top: 20px;
+}
+
+.leave-people {
+  display: grid;
+  gap: 4px;
+}
+
+.leave-person-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #1746a2;
+  text-decoration: underline;
+  text-align: start;
+}
+
+.leave-no-coverage {
+  color: #b42318;
+}
