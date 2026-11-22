@@ -1,3 +1,4 @@
+import {validLeave} from './employee-leave.ts';
 import {sheetHeaders, sheetNames, type SheetName} from './schema-v1.2.ts';
 export type Row = Record<string,string>;
 export type Workbook = Record<SheetName,Row[]>;
@@ -29,6 +30,10 @@ export function validateWorkbook(workbook:Workbook):string[] {
   check('Scores','employeeId',employees);check('Scores','axisId',axes);check('Scores','periodId',periods);
   check('EmployeeSkills','employeeId',employees);check('EmployeeSkills','skillId',skills);
   check('Certifications','employeeId',employees);check('Certifications','certificateId',certs);
+  check('EmployeeLeaves','employeeId',employees);
+  for(const [index,row] of workbook.EmployeeLeaves.entries()){
+    if(!validLeave(row))errors.push('EmployeeLeaves row '+(index+2)+': invalid leave');
+  }
   check('EmployeeComments','employeeId',employees);
   check('Projects','orgId',orgs);
   check('Bookings','employeeId',employees);check('Bookings','projectId',projects);

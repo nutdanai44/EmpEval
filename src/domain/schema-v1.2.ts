@@ -14,6 +14,7 @@ export const sheetHeaders = {
   EmployeeSkills: ['employeeId','skillId','level','updatedAt'],
   CertificateMaster: ['id','name','issuer','description','active'],
   Certifications: ['id','employeeId','certificateId','issued','expires','credentialUrl'],
+  EmployeeLeaves: ['id','employeeId','type','mode','startDate','endDate','startTime','endTime','dailyMinutes','detail'],
   EmployeeComments: ['id','employeeId','author','createdAt','comment'],
   Portfolio: ['id','employeeId','projectId','summary','contribution'],
   Meta: ['key','value']

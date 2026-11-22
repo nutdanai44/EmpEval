@@ -1,0 +1,56 @@
+.employee-leave .row {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.leave-total {
+  font-size: 1.6rem;
+}
+
+.leave-breakdown,
+.leave-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: 12px;
+}
+
+.leave-breakdown > div {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.leave-breakdown dd {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+.leave-form {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.leave-form label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.leave-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.leave-history {
+  margin-top: 16px;
+}
+
+.leave-secondary {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

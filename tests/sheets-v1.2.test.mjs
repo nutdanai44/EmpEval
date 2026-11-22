@@ -26,3 +26,34 @@ test('save refuses invalid references before any remote mutation',async()=>{
   await assert.rejects(()=>saveWorkbook(api,w,''),/Invalid workbook/);
   assert.equal(calls,0);
 });
+test('loads older workbooks and creates a durable leave tab on save', async () => {
+  const sheets = new Map(sheetNames.filter(name => name !== 'EmployeeLeaves')
+    .map(name => [name, [[...sheetHeaders[name]]]]));
+  sheets.get('Employees').push(['employee-1']);
+  const api = async (path, method = 'GET', body) => {
+    if (path === '?fields=sheets.properties.title') {
+      return { sheets: [...sheets.keys()].map(title => ({ properties: { title } })) };
+    }
+    if (path.startsWith('/values/')) {
+      return { values: sheets.get(decodeURIComponent(path.split('/').at(-1)).split('!')[0]) };
+    }
+    if (path === ':batchUpdate') {
+      for (const request of body.requests) sheets.set(request.addSheet.properties.title, []);
+    }
+    if (path === '/values:batchUpdate') {
+      for (const entry of body.data) sheets.set(entry.range.split('!')[0], entry.values);
+    }
+    return {};
+  };
+  const { workbook, revision } = await loadWorkbook(api);
+  assert.deepEqual(workbook.EmployeeLeaves, []);
+  workbook.EmployeeLeaves = [{
+    id: 'leave-1', employeeId: 'employee-1', type: 'other', mode: 'morning',
+    startDate: '2026-02-01', endDate: '2026-02-01', startTime: '', endTime: '',
+    dailyMinutes: '195', detail: 'Test entry'
+  }];
+  const savedRevision = await saveWorkbook(api, workbook, revision);
+  const reloaded = await loadWorkbook(api);
+  assert.deepEqual(reloaded.workbook.EmployeeLeaves, workbook.EmployeeLeaves);
+  assert.equal(reloaded.revision, savedRevision);
+});
